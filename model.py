@@ -15,8 +15,9 @@ def corrigir_texto(texto):
     return corrected_text
 
 # Exemplo de uso
-texto_com_erro = "She likes playing in park and come here every week"
+""" texto_com_erro = "She likes playing in park and come here every week"
 texto_corrigido = corrigir_texto(texto_com_erro)
 
 print('\nincorrect sentence: ' + texto_com_erro)
 print('corrected sentence: ' + texto_corrigido)
+ """

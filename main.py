@@ -1,9 +1,9 @@
 import speech_recognition as sr
-import model
+from model import corrigir_texto
 
 # Inicializa o recognizer
 recognizer = sr.Recognizer()
-correção = model.corrigir_texto("Text to text")
+
 # Usa o microfone como fonte de áudio
 with sr.Microphone() as source:
     print("Ajustando o ruído ambiente...")
@@ -15,10 +15,14 @@ with sr.Microphone() as source:
             # Escuta o áudio
             audio = recognizer.listen(source)
             
-            # Faz a transcrição usando a API do Google
-            text = recognizer.recognize_google(audio, language="pt-BR")
-            print("Você disse: " + text)
+            #Faz a transcrição usando a API do Google
+            text = recognizer.recognize_google(audio, language="en")
             
+            correction = corrigir_texto(text)
+
+            print('\nincorrect sentence: ' + text)
+            print('corrected sentence: ' + correction)
+
         except sr.UnknownValueError:
             print("Não entendi o que foi dito.")
         except sr.RequestError as e:
