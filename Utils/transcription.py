@@ -1,3 +1,8 @@
+#transcripted = transcript()
+#output = errorDetection(transcripted)
+#send_message(text, "69d2d1a285494d1ba7e76396fe451f25")
+""" from transcription import transcript
+from errorDetection import errorDetection """
 import assemblyai as aai
 
 def transcript():
