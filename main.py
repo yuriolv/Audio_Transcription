@@ -1,37 +1,35 @@
-#transcripted = transcript()
-#output = errorDetection(transcripted)
-#send_message(text, "69d2d1a285494d1ba7e76396fe451f25")
 import customtkinter as ctk
-from PIL import Image, ImageTk
+from Utils.getTranscription import get_Transcription
+from Utils.errorDetection import errorDetection
+from Utils.sendMessage import send_message
+from PIL import Image
 
 def go_to_second_screen():
-    output = [
-        'Wrong (Verb Tense) - "I was went to the park yesterday with my friends."',
-        'Wrong (Subject-verb agreement) - "We has a lot of fun, and we play soccer for hours."',
-        'Wrong (Subject-verb agreement) - "We don\'t know why, but we was very tired after that."'
-    ]
+    transcripted = get_Transcription()
+    students = errorDetection(transcripted)
+
 
     for widget in checkbutton_frame.winfo_children():
         widget.destroy()
 
     variaveis = {}
-    for i in output.items():
-        for error in i[1]:
+    for student in students:
+        for phrase in student.phrases:
             var = ctk.BooleanVar(value=False)
             chk = ctk.CTkCheckBox(
                 checkbutton_frame, 
-                text=error, 
+                text=phrase.content, 
                 variable=var,
                 text_color="white",
-                fg_color="#1D4E89"
+                fg_color="#1D4E89",
+                command=lambda p=phrase: checkbox_changed(p)
             )
             chk.pack(fill="x", padx=20, pady=5, anchor="center")
-            variaveis.append(({i[0]: error}, var))
-            #resolver como a lista será passada para a função put message 
+             
         
 
     confirm_button.configure(
-        command=lambda: put_message([item for item, var in variaveis if var.get()])
+        command=lambda: put_message(students)
     )
 
     show_frame(frame2)
@@ -39,12 +37,23 @@ def go_to_second_screen():
 def back_to_first_screen():
     show_frame(frame1)
 
-def put_message(senders, errors):
-    #pegar id do sender
-    text = 'Errors detected during the lesson:\n'
-    for index, message in enumerate(errors):
-        text += f'{index + 1}) {message}\n'
-    print(text)
+def checkbox_changed(phrase):
+    phrase.check = not phrase.check
+        
+
+def put_message(students):
+    texts = []
+    for student in students:
+        text = 'Errors detected during the lesson:\n'
+        for index, phrase in enumerate(student.phrases):
+            if phrase.check == True:
+                phrase.content = phrase.content.replace(student.name, '')
+                phrase.content = phrase.content.replace(' - ', '')
+                text += f'{index + 1}) {phrase.content}\n'
+                texts.append(text)
+                send_message(text, student.email) 
+
+
 
 def show_frame(frame):
     for widget in root.winfo_children():
@@ -95,3 +104,6 @@ confirm_button = ctk.CTkButton(button_frame, text="Confirm")
 confirm_button.pack(side='left', padx=5)
 
 root.mainloop()
+
+
+""" Verificação de erros, frontend """

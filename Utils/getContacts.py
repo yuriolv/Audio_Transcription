@@ -1,9 +1,13 @@
 import os
-from refreshToken import refresh
+from Utils.refreshToken import refresh
 import requests
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def get_zoom_contacts():
+
+def get_email(user_name):
     refresh()
     contacts = {}
 
@@ -19,7 +23,14 @@ def get_zoom_contacts():
     if response.status_code == 200:
         json = response.json()
         for i in json['contacts']:
-            contacts[f'{i['first_name']} {i['last_name']}'] = i['email']
-        return contacts
+            name = f'{i["first_name"]} {i["last_name"]}'
+            contacts[name] = i['email']
     else:
         raise Exception(response.text)
+    
+    for key, value in contacts.items():
+        if user_name.lower() == key.lower():
+            return value
+
+if __name__ == "__main__":
+    email = get_email('Erandi matos Magalhaes')
