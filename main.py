@@ -1,3 +1,6 @@
+#transcripted = transcript()
+#output = errorDetection(transcripted)
+#send_message(text, "69d2d1a285494d1ba7e76396fe451f25")
 import customtkinter as ctk
 from PIL import Image, ImageTk
 
@@ -11,18 +14,21 @@ def go_to_second_screen():
     for widget in checkbutton_frame.winfo_children():
         widget.destroy()
 
-    variaveis = []
-    for item in output:
-        var = ctk.BooleanVar(value=False)
-        chk = ctk.CTkCheckBox(
-            checkbutton_frame, 
-            text=item, 
-            variable=var,
-            text_color="white",
-            fg_color="#1D4E89"
-        )
-        chk.pack(fill="x", padx=20, pady=5, anchor="center")
-        variaveis.append((item, var)) 
+    variaveis = {}
+    for i in output.items():
+        for error in i[1]:
+            var = ctk.BooleanVar(value=False)
+            chk = ctk.CTkCheckBox(
+                checkbutton_frame, 
+                text=error, 
+                variable=var,
+                text_color="white",
+                fg_color="#1D4E89"
+            )
+            chk.pack(fill="x", padx=20, pady=5, anchor="center")
+            variaveis.append(({i[0]: error}, var))
+            #resolver como a lista será passada para a função put message 
+        
 
     confirm_button.configure(
         command=lambda: put_message([item for item, var in variaveis if var.get()])
@@ -33,7 +39,8 @@ def go_to_second_screen():
 def back_to_first_screen():
     show_frame(frame1)
 
-def put_message(errors):
+def put_message(senders, errors):
+    #pegar id do sender
     text = 'Errors detected during the lesson:\n'
     for index, message in enumerate(errors):
         text += f'{index + 1}) {message}\n'

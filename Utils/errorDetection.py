@@ -3,19 +3,15 @@ import nltk
 
 
 def errorDetection(summary):
-    errors = []
+    errors = {}
     output = ''
-    nltk.download('punkt') 
-
-    phrases = nltk.sent_tokenize(summary)
 
     prompt = """Im sending you one phrase, classify it with only one word, being the word one of the two options: Correct, Wrong(The Corresponding Grammatical or Syntatical Error Type). Here is the phrase: """
 
     model = OllamaLLM(model="gemma2:27b") #ollama run llama3.2-vision 11B
 
-    i = 0
-    while phrases:
-        phrase = phrases.pop(0)
+    for message, sender in summary.values():
+        phrase = message['content']
         new_prompt = prompt + phrase
 
         if new_prompt.lower() == "exit":
@@ -26,8 +22,8 @@ def errorDetection(summary):
                 break
             output += chunk
             if(chunk == '\n'):
-                output += f' - "{phrase}"'
-                errors.append(output.replace(' \n', ''))
+                output += f' - {sender}: "{phrase}"'
+                errors.setdefault(sender, []).append(f'{output.replace(' \n', '')}') 
                 output = ''
     return errors
 

@@ -3,48 +3,41 @@
 #send_message(text, "69d2d1a285494d1ba7e76396fe451f25")
 """ from transcription import transcript
 from errorDetection import errorDetection """
-import assemblyai as aai
+from pathlib import Path
 
-def transcript():
-  aai.settings.api_key = "cc88dc1603024ea089533cf365cbcc4d"
+def get_Transcription():
+  main_directory = Path("audios")
 
-  FILE_URL = "audios/audio1044392040.m4a"
 
-  config = aai.TranscriptionConfig(speaker_labels=True)
+  subdirectories = [item for item in main_directory.iterdir() if item.is_dir()]
+  if not subdirectories: return None
 
-  transcriber = aai.Transcriber()
-  transcript = transcriber.transcribe(
-    FILE_URL,
-    config=config
-  )
+  subdirectory_path = subdirectories[-1]
 
-  return transcript.text
+  files = [file for file in subdirectory_path.iterdir() if file.is_file()]
+  if not files: return None
 
-""" import os
+  with open(files[0]) as f :
+      text = f.read()
 
-from dotenv import load_dotenv
-import assemblyai as aai
+  messages = {}
 
-from zoom import ZoomClient
+  # Processando o texto
+  lines = text.strip().split("\n\n")  # Dividindo por mensagens
+  for i, line in enumerate(lines, start=1):
+      parts = line.split("\n")  # Separando cabeçalho e mensagem
+      header = parts[0]
+      content = parts[1]
+      
+      # Extraindo dados do cabeçalho
+      sender, time = header.strip("[]").rsplit("] ", 1)
+      
+      # Adicionando ao dicionário
+      messages[f"message_{i}"] = {
+          "sender": sender,
+          "time": time,
+          "content": content
+      }
 
-load_dotenv()
-
-ZOOM_ACCOUNT_ID = os.environ.get('ZOOM_ACCOUNT_ID')
-ZOOM_CLIENT_ID = os.environ.get('ZOOM_CLIENT_ID')
-ZOOM_CLIENT_SECRET = os.environ.get('ZOOM_CLIENT_SECRET')
-aai.settings.api_key = os.environ.get('ASSEMBLYAI_API_KEY')
-
-transcriber = aai.Transcriber()
-
-client = ZoomClient(account_id=ZOOM_ACCOUNT_ID, client_id=ZOOM_CLIENT_ID, client_secret=ZOOM_CLIENT_SECRET)
-
-recs = client.get_recordings()
-if recs['meetings']:    
-    rec_id = recs['meetings'][0]['id']
-    my_url = client.get_download_url(rec_id)
-    transcript = transcriber.transcribe(my_url)
-    print(transcript.text)
-    with open('transcript.txt', 'w') as f:
-        f.write(transcript.text)
-else:
-    print('No meetings to transcribe.') """
+  # Exibindo o resultado
+  return messages

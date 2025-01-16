@@ -1,12 +1,15 @@
 import requests
+from dotenv import load_dotenv, find_dotenv
 import os
+from refreshToken import refresh
 
 ZOOM_TOKEN = os.environ.get('ZOOM_TOKEN')
-ZOOM_API_URL = os.environ.get('ZOOM_API_URL')
+ZOOM_API_URL = os.environ.get('END_MESSAGES')
 
-
+load_dotenv(find_dotenv())
 
 def send_message(message, channel_id):
+    refresh()
     headers = {
         "Authorization": f"Bearer {ZOOM_TOKEN}",
         "Content-Type": "application/json"
@@ -14,7 +17,7 @@ def send_message(message, channel_id):
 
     json = {
         "message": message,
-        "to_channel": channel_id
+        "to_contact": channel_id
     }
     #"69d2d1a285494d1ba7e76396fe451f25"
     response = requests.post(ZOOM_API_URL, json=json, headers=headers)
@@ -26,4 +29,4 @@ def send_message(message, channel_id):
         print(response.json())
 
 if __name__ == "__main__":
-    send_message()
+    send_message("ol[a]", "yuri25olv@gmail.com")
