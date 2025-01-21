@@ -5,23 +5,23 @@ from Utils.errorDetection import errorDetection
 from Utils.sendMessage import send_message
 from PIL import Image
 
-#Consertar path -> ajustar frontend -> verificação de erros
+
 
 def go_to_second_screen():
-    try:
-        if selected[0]:
-            file = selected[0]
-        else:
-            print('No files selected')
-        transcripted = get_Transcription(file)
-        students = errorDetection(transcripted)
-    except Exception as e:
-        print(e)
+
+    if selected[0]:
+        file_name = selected[0]
+    else:
+        raise print('No files selected')
+
+    transcripted = get_Transcription(file_name)
+    students = errorDetection(transcripted)
+
+    
 
     for widget in checkbutton_frame.winfo_children():
         widget.destroy()
 
-    variaveis = {}
     for student in students:
         for phrase in student.phrases:
             var = ctk.BooleanVar(value=False)
@@ -76,7 +76,6 @@ def get_files():
     return subdirectories
 
 def select_option(option):
-    print(option)
     selected[0] = option
 
 

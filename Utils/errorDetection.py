@@ -27,11 +27,11 @@ def errorDetection(users):
                 
 
             if output != '':
-                output += f' : "{phrase.content}" - {user.name}\n Correction: '
+                report = f'"{phrase.content}" {output} - {user.name}\n Correction: '
 
                 for chunk in model.stream(prompt2):
-                    output += chunk
-                user.phrases[i].content = output
+                    report += chunk
+                user.phrases[i].content = report
                 
                 
     return users

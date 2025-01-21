@@ -5,21 +5,20 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def get_Transcription(file):
+def get_Transcription(file_name):
   main_directory = Path("Audios")
 
   for item in main_directory.iterdir():
-      path = item.name.split()
-      name = f'{path[0]} {path[1]}'
+      absolute = item.name.split()
+      name = f'{absolute[0]} {absolute[1]}'
 
-      if name == file:
+      if name == file_name:
           for i in item.iterdir():
-            relative = i.relative_to()
+            path = i
 
-          transcripted = Transcription(relative)
+          transcripted = Transcription(path)
 
           transcripted.getTranscription()
           transcripted.getStudents()
 
-          print(transcripted.students)
           return transcripted.students
