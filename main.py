@@ -1,13 +1,22 @@
 import customtkinter as ctk
 from Utils.getTranscription import get_Transcription
+from pathlib import Path
 from Utils.errorDetection import errorDetection
 from Utils.sendMessage import send_message
 from PIL import Image
 
-def go_to_second_screen():
-    transcripted = get_Transcription()
-    students = errorDetection(transcripted)
+#Consertar path -> ajustar frontend -> verificação de erros
 
+def go_to_second_screen():
+    try:
+        if selected[0]:
+            file = selected[0]
+        else:
+            print('No files selected')
+        transcripted = get_Transcription(file)
+        students = errorDetection(transcripted)
+    except Exception as e:
+        print(e)
 
     for widget in checkbutton_frame.winfo_children():
         widget.destroy()
@@ -53,6 +62,22 @@ def put_message(students):
                 texts.append(text)
                 send_message(text, student.email) 
 
+def get_files():
+    main_directory = Path("Audios")
+    subdirectories = []
+
+    for item in main_directory.iterdir():
+        if item.is_dir():
+            name = item.name.split()
+            subdirectories.append(f'{name[0]} {name[1]}')
+    
+    if not subdirectories: return None
+
+    return subdirectories
+
+def select_option(option):
+    print(option)
+    selected[0] = option
 
 
 def show_frame(frame):
@@ -76,10 +101,21 @@ image = Image.open("Assets/logo1.png")
 logo = ctk.CTkImage(image, size=(140,100))
 
 logo_label = ctk.CTkLabel(frame1, image=logo, text="")
-logo_label.place(relx=0.5, rely=0.3, anchor="center")
+logo_label.place(relx=0.5, rely=0.1, anchor="center")
 
-button = ctk.CTkButton(frame1, text="Start the correction", command=go_to_second_screen)
-button.pack(expand=True)
+selected = [None]
+values = get_files()
+
+combobox = ctk.CTkComboBox(
+    frame1,
+    values=values,  # Define as opções disponíveis
+    command=select_option  # Chama a função quando uma opção é selecionada
+)
+combobox.pack(pady=200)
+combobox.set('Select the lesson')
+
+button = ctk.CTkButton(frame1, text="Start the correction", command=lambda: go_to_second_screen())
+button.pack()
 
 # Frame 2 (segunda tela)
 frame2 = ctk.CTkFrame(root, corner_radius=0)

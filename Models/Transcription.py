@@ -1,29 +1,17 @@
-from Model.User import User
-from Model.Phrases import Phrases
+from Models.User import User
+from Models.Phrases import Phrases
 from pathlib import Path
 
 class Transcription:
-    def __init__(self):
+    def __init__(self, file):
         self.date = None
+        self.file = file
         self.transcripted = None
         self.students = []
 
     def getTranscription(self):
-        main_directory = Path("audios")
-        subdirectories = []
 
-        for item in main_directory.iterdir():
-            if item.is_dir():
-                subdirectories.append(item)
-        
-        if not subdirectories: return None
-
-        subdirectory_path = subdirectories[-1]
-
-        files = [file for file in subdirectory_path.iterdir() if file.is_file()]
-        if not files: return None
-
-        with open(files[0], encoding='utf-8') as f :
+        with open(self.file, encoding='utf-8') as f :
             text = f.read()
 
         messages = {}
