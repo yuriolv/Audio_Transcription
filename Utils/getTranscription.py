@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def get_Transcription(file_name):
-  main_directory = Path("Audios")
+  main_directory = Path("Assets/Transcriptions")
 
   for item in main_directory.iterdir():
       absolute = item.name.split()
