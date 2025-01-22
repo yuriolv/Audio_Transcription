@@ -4,7 +4,8 @@ from pathlib import Path
 from Utils.errorDetection import errorDetection
 from Utils.sendMessage import send_message
 from tkinter import PhotoImage
-from PIL import Image
+import threading, time
+from PIL import Image, ImageTk
 
 class App(ctk.CTk):
     def __init__(self):
@@ -22,7 +23,7 @@ class App(ctk.CTk):
         self.frames = {}
         self.shared_data = None
 
-        for F in (FirstScreen, SecondScreen):
+        for F in (FirstScreen, SecondScreen, LoadingScreen):
             frame = F(parent=self, controller=self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
@@ -105,10 +106,21 @@ class FirstScreen(ctk.CTkFrame):
         if self.selected[0] != None:
             file_name = self.selected[0]
             self.controller.shared_data = file_name
-            self.controller.show_frame(SecondScreen)
+
+            self.controller.show_frame(LoadingScreen)
+            
+            
+            threading.Thread(target=self.load_second_screen).start()
         else:
             self.error_label.configure(text="No file selected! Please select one and try again.")
             return
+        
+    def load_second_screen(self):
+        second_screen = self.controller.frames[SecondScreen] 
+        second_screen.initialize()
+        
+        self.controller.frames[LoadingScreen].stop_spinner()
+        self.controller.show_frame(SecondScreen)
         
     def get_files(self):
         main_directory = Path("Assets/Transcriptions")
@@ -122,14 +134,58 @@ class FirstScreen(ctk.CTkFrame):
         if not subdirectories: return None
 
         return subdirectories
-
+    
+class LoadingScreen(ctk.CTkFrame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        self.controller = controller
+        self.configure(fg_color="#FFFFFF")
         
+        # Rótulo de texto
+        self.label = ctk.CTkLabel(
+            self,
+            text="Loading, please wait...",
+            font=ctk.CTkFont(family='Inter', size=18),
+            text_color='#000000'
+        )
+        self.label.grid(column=0, row=0, sticky='s')
+        
+        # Carregar a imagem do spinner
+        self.spinner_image = Image.open("Assets/Images/spinner.png")
+        self.spinner_image = self.spinner_image.resize((30, 30))  
+        self.spinner_angle = 0  
+
+        # Criar o rótulo para o spinner
+        self.spinner_label = ctk.CTkLabel(self, text='')
+        self.spinner_label.grid(column=0, row=1, sticky='n')
+
+        # Iniciar a animação do spinner 
+        self.rotate_spinner()
+
+    def rotate_spinner(self):
+        # Rotacionar a imagem
+        rotated_image = self.spinner_image.rotate(self.spinner_angle, resample=Image.BICUBIC)
+        rotated_photo = ImageTk.PhotoImage(rotated_image)
+
+        # Atualizar o rótulo com a imagem rotacionada
+        self.spinner_label.configure(image=rotated_photo)
+        self.spinner_label.image = rotated_photo  # Necessário manter uma referência à imagem
+
+        # Incrementar o ângulo para a próxima rotação
+        self.spinner_angle = (self.spinner_angle + 10) % 360
+
+        # Continuar a rotação a cada 50ms
+        self.controller.after(5, self.rotate_spinner)
+
+    def stop_spinner(self):
+        self.is_running = False
 
 
 class SecondScreen(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
+        self.is_initialized = False
 
         image = Image.open("Assets/Images/image5.png")  
         logo = ctk.CTkImage(image, size=(140,100))
@@ -155,6 +211,10 @@ class SecondScreen(ctk.CTkFrame):
 
 
     def initialize(self):
+        if self.is_initialized:
+            return
+        
+
         self.clear_checkbutton_frame()
 
         transcripted = get_Transcription(self.controller.shared_data)
@@ -176,6 +236,8 @@ class SecondScreen(ctk.CTkFrame):
         self.confirm_button.configure(
             command=lambda: self.put_message(students)
         )
+
+        self.is_initialized = True
 
     def clear_checkbutton_frame(self):
         for widget in self.checkbutton_frame.winfo_children():
