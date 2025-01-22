@@ -3,16 +3,21 @@ from Utils.getTranscription import get_Transcription
 from pathlib import Path
 from Utils.errorDetection import errorDetection
 from Utils.sendMessage import send_message
+from tkinter import PhotoImage
 from PIL import Image
 
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("Error Correction")
+        self.title("LauraFix")
         self.geometry("900x600")
+        ctk.set_appearance_mode('light')
 
         self.grid_rowconfigure(0, weight=1)  # Permitir que a linha 0 se expanda
         self.grid_columnconfigure(0, weight=1)
+
+        icon = PhotoImage("Assets/Images/image15.ico")  
+        self.iconbitmap(icon)
 
         self.frames = {}
         self.shared_data = None
@@ -35,29 +40,61 @@ class FirstScreen(ctk.CTkFrame):
         super().__init__(parent)
         self.controller = controller
         self.selected = [None]
+        self.configure(fg_color="#FFFFFF")
 
-        # Elementos da Tela Inicial
-        image = Image.open("Assets/Images/logo1.png")  
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=2)
+
+        title = ctk.CTkLabel(self, text_color='#000000', text='Welcome to LauraFix! Choose the lesson below',font=ctk.CTkFont(family='Inter',size=18))
+        title.grid(column=1, row=0, sticky='s')
+
+        image = Image.open("Assets/Images/image5.png")  
         logo = ctk.CTkImage(image, size=(140,100))
 
-        logo_label = ctk.CTkLabel(self, image=logo, text="")
-        logo_label.place(relx=0.5, rely=0.1, anchor="center")
+        logo_label = ctk.CTkLabel(self, image=logo, text="", fg_color="#3C808C")
+        logo_label.grid(column=0, row=0,rowspan=3,sticky='nsew')
+
+        middle_frame = ctk.CTkFrame(self, fg_color='transparent')
+        middle_frame.grid(column=1, row=1)
+
+        middle_frame.grid_rowconfigure(0, weight=1)
+        middle_frame.grid_columnconfigure(0, weight=1)
+        middle_frame.grid_columnconfigure(1, weight=1)
 
         values = self.get_files()
 
         combobox = ctk.CTkComboBox(
-            self,
-            values=values,  # Define as opções disponíveis
-            command=self.select_option  # Chama a função quando uma opção é selecionada
+            middle_frame,
+            values=values,
+            state='readonly',  
+            command=self.select_option, 
+            button_color="#3C808C",
+            dropdown_font=ctk.CTkFont(family='Inter'),
+            font=ctk.CTkFont(family='Inter'),
+            border_color="#3C808C",
+            dropdown_fg_color="#FFFFFF",
+            button_hover_color="#4092a0"
         )
-        combobox.pack(pady=100)
-        combobox.set('Select the lesson')
+        
+        combobox.grid(column=0, row=0, padx=10)
+        combobox.set('Lessons')
+
+        start_button = ctk.CTkButton(
+            middle_frame, text="Start the correction", 
+            command=lambda: self.go_to_second_screen(), 
+            fg_color="#3C808C", text_color='#FFFFFF', 
+            hover_color="#4092a0", 
+            font=ctk.CTkFont(family='Inter')
+            )
+            
+        start_button.grid(column=1, row=0, padx=5)
 
         self.error_label = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=14), text_color="red")
-        self.error_label.pack(pady=10)
-
-        button = ctk.CTkButton(self, text="Start the correction", command=lambda: self.go_to_second_screen())
-        button.pack()
+        self.error_label.grid(column=1, row=2, sticky='n')
 
     def select_option(self, option):
         self.error_label.configure(text="")  
@@ -94,7 +131,7 @@ class SecondScreen(ctk.CTkFrame):
         super().__init__(parent)
         self.controller = controller
 
-        image = Image.open("Assets/Images/logo1.png")  
+        image = Image.open("Assets/Images/image5.png")  
         logo = ctk.CTkImage(image, size=(140,100))
 
         logo_label2 = ctk.CTkLabel(self, image=logo, text="")
@@ -120,7 +157,6 @@ class SecondScreen(ctk.CTkFrame):
     def initialize(self):
         self.clear_checkbutton_frame()
 
-        # Carregar transcrição e dados de erros
         transcripted = get_Transcription(self.controller.shared_data)
         students = errorDetection(transcripted)
 
@@ -142,7 +178,6 @@ class SecondScreen(ctk.CTkFrame):
         )
 
     def clear_checkbutton_frame(self):
-        """Remove widgets existentes no frame de checkboxes."""
         for widget in self.checkbutton_frame.winfo_children():
             widget.destroy()
 
