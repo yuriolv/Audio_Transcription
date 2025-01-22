@@ -103,24 +103,22 @@ class FirstScreen(ctk.CTkFrame):
 
     def go_to_second_screen(self):
 
-        if self.selected[0] != None:
+        if self.selected[0] is not None:
             file_name = self.selected[0]
             self.controller.shared_data = file_name
-
+            
+            procces_thread = threading.Thread(target=self.load_second_screen)
+            procces_thread.start()
             self.controller.show_frame(LoadingScreen)
-            
-            
-            threading.Thread(target=self.load_second_screen).start()
+
         else:
             self.error_label.configure(text="No file selected! Please select one and try again.")
             return
         
     def load_second_screen(self):
-        second_screen = self.controller.frames[SecondScreen] 
-        second_screen.initialize()
-        
-        self.controller.frames[LoadingScreen].stop_spinner()
+        time.sleep(20)
         self.controller.show_frame(SecondScreen)
+        
         
     def get_files(self):
         main_directory = Path("Assets/Transcriptions")
@@ -140,45 +138,57 @@ class LoadingScreen(ctk.CTkFrame):
         super().__init__(parent)
         self.controller = controller
         self.configure(fg_color="#FFFFFF")
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
         
-        # Rótulo de texto
-        self.label = ctk.CTkLabel(
+        label_title = ctk.CTkLabel(
             self,
             text="Loading, please wait...",
             font=ctk.CTkFont(family='Inter', size=18),
             text_color='#000000'
         )
-        self.label.grid(column=0, row=0, sticky='s')
-        
-        # Carregar a imagem do spinner
-        self.spinner_image = Image.open("Assets/Images/spinner.png")
-        self.spinner_image = self.spinner_image.resize((30, 30))  
-        self.spinner_angle = 0  
+        label_title.grid(column=0, row=0, sticky='s', pady=10)
 
-        # Criar o rótulo para o spinner
-        self.spinner_label = ctk.CTkLabel(self, text='')
-        self.spinner_label.grid(column=0, row=1, sticky='n')
+        loading_label = ctk.CTkLabel(
+            self,
+            bg_color='white',
+            text=''
+        )
 
-        # Iniciar a animação do spinner 
-        self.rotate_spinner()
+        loading_label.grid(column=0, row=1, sticky='n', pady=10)
 
-    def rotate_spinner(self):
-        # Rotacionar a imagem
-        rotated_image = self.spinner_image.rotate(self.spinner_angle, resample=Image.BICUBIC)
-        rotated_photo = ImageTk.PhotoImage(rotated_image)
+        frames = self._get_frames('Assets/Images/loading.gif')
+        self._play_gif(loading_label, frames)
 
-        # Atualizar o rótulo com a imagem rotacionada
-        self.spinner_label.configure(image=rotated_photo)
-        self.spinner_label.image = rotated_photo  # Necessário manter uma referência à imagem
 
-        # Incrementar o ângulo para a próxima rotação
-        self.spinner_angle = (self.spinner_angle + 10) % 360
+    def _play_gif(self, label, frames):
+        def update(frame_idx=0):
+            frame = frames[frame_idx]
+            label.configure(image=frame)
+            frame_idx = (frame_idx + 1) % len(frames)  # Loop circular das frames
+            self.controller.after(50, update, frame_idx)  # Atualiza a cada 100ms
 
-        # Continuar a rotação a cada 50ms
-        self.controller.after(5, self.rotate_spinner)
+        update()
 
-    def stop_spinner(self):
-        self.is_running = False
+    def _next_frame(self, frame, label):
+        label.configure(
+            image=frame
+        )
+
+    def _get_frames(self, img_path):
+        with Image.open(img_path) as gif:
+            frames = []
+            while True:
+                try:
+                    gif.seek(len(frames))  # Vai para o próximo frame
+                    frame = gif.copy()  # Faz uma cópia do frame atual como PIL.Image.Image
+                    frames.append(ctk.CTkImage(light_image=frame, size=(40, 40)))  # Define o tamanho da imagem
+                except EOFError:
+                    break  # Sai do loop ao atingir o final do GIF
+            return frames
+
 
 
 class SecondScreen(ctk.CTkFrame):
@@ -213,7 +223,6 @@ class SecondScreen(ctk.CTkFrame):
     def initialize(self):
         if self.is_initialized:
             return
-        
 
         self.clear_checkbutton_frame()
 
