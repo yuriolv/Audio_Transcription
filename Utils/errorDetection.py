@@ -10,7 +10,7 @@ def errorDetection(users):
 
     for user in users:
         phrases = []
-        for i, phrase in enumerate(user.phrases[:]):
+        for phrase in enumerate(user.phrases[:]):
             print(phrase.content)
             prompt2 = "Send me only the corrected sentence: " + phrase.content
             output = ''
@@ -22,7 +22,7 @@ def errorDetection(users):
             
             for chunk in model.stream(new_prompt):
                 if(chunk == 'Correct'):
-                    user.phrases.pop(i)
+                    user.phrases.pop(user.phrases.index(phrase))
                     break
                 output += chunk
                 
