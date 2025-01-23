@@ -1,6 +1,7 @@
 from Models.User import User
 from Models.Phrases import Phrases
 from pathlib import Path
+import nltk
 
 class Transcription:
     def __init__(self, file):
@@ -11,17 +12,18 @@ class Transcription:
 
     def getTranscription(self):
 
+        nltk.download('punkt') 
+
         with open(self.file, encoding='utf-8') as f :
             text = f.read()
 
         messages = {}
-
         
         lines = text.strip().split("\n\n")  
         for i, line in enumerate(lines, start=1):
             parts = line.split("\n")  
             header = parts[0]
-            content = parts[1]
+            content = nltk.sent_tokenize(parts[1])
             
             
             sender, time = header.strip("[]").rsplit("] ", 1)
@@ -38,8 +40,9 @@ class Transcription:
     def getStudents(self):
         messages = {}
         for message in self.transcripted.values():
-            phrase = Phrases(message['content'])
-            messages.setdefault(message['sender'], []).append(phrase)
+            for i in message['content']:
+                phrase = Phrases(i)
+                messages.setdefault(message['sender'], []).extend([phrase])
 
         for key, value in messages.items():
             name = key

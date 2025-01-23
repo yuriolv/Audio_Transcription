@@ -149,7 +149,7 @@ class LoadingScreen(ctk.CTkFrame):
         )
         label_title.grid(column=0, row=0, sticky='s', pady=10)
 
-        loading_label = ctk.CTkLabel(self)
+        loading_label = ctk.CTkLabel(self, text='')
 
         loading_label.grid(column=0, row=1, sticky='n', pady=10)
 
