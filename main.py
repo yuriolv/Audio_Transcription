@@ -17,8 +17,7 @@ class App(ctk.CTk):
         self.grid_rowconfigure(0, weight=1)  # Permitir que a linha 0 se expanda
         self.grid_columnconfigure(0, weight=1)
 
-        icon = PhotoImage("Assets/Images/image15.ico")  
-        self.iconbitmap(icon)
+        self.iconbitmap("Assets/Images/image15.ico")
 
         self.frames = {}
         self.shared_data = None
@@ -116,7 +115,6 @@ class FirstScreen(ctk.CTkFrame):
             return
         
     def load_second_screen(self):
-        time.sleep(20)
         self.controller.show_frame(SecondScreen)
         
         
@@ -151,11 +149,7 @@ class LoadingScreen(ctk.CTkFrame):
         )
         label_title.grid(column=0, row=0, sticky='s', pady=10)
 
-        loading_label = ctk.CTkLabel(
-            self,
-            bg_color='white',
-            text=''
-        )
+        loading_label = ctk.CTkLabel(self)
 
         loading_label.grid(column=0, row=1, sticky='n', pady=10)
 

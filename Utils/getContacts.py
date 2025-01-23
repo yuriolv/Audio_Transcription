@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def get_email(user_name):
     refresh()
-    load_dotenv()
+    
     contacts = {}
 
     ZOOM_TOKEN = os.environ.get('ZOOM_TOKEN')

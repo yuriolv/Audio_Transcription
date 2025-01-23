@@ -14,7 +14,7 @@ load_dotenv(find_dotenv())
 
 def send_message(message, contact_id):
     refresh()
-    load_dotenv()
+    
     headers = {
         "Authorization": f"Bearer {ZOOM_TOKEN}",
         "Content-Type": "application/json"

@@ -1,5 +1,5 @@
 import requests, os
-from dotenv import find_dotenv, set_key
+from dotenv import find_dotenv, set_key, load_dotenv
 from requests.auth import HTTPBasicAuth
 import time
 import sys
@@ -30,9 +30,10 @@ def refresh():
         refresh_token = token_data.get("refresh_token")
         expires_in = token_data.get("expires_in")
         
-        print(access_token)
         set_key(find_dotenv(), 'ZOOM_TOKEN', access_token)
         set_key(find_dotenv(), 'REFRESH_TOKEN', refresh_token)
-        print(os.environ.get('ZOOM_TOKEN'))
+
+        load_dotenv(find_dotenv(), override=True)
+
     else:
         print(f"Erro ao obter o novo token: {response.status_code} - {response.text}")
