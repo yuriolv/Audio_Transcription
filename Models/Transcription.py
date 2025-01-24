@@ -12,7 +12,7 @@ class Transcription:
 
     def getTranscription(self):
 
-        nltk.download('punkt') 
+        nltk.download('punkt_tab') 
 
         with open(self.file, encoding='utf-8') as f :
             text = f.read()

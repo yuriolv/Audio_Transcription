@@ -190,21 +190,28 @@ class SecondScreen(ctk.CTkFrame):
         super().__init__(parent)
         self.controller = controller
         self.is_initialized = False
+        self.configure(fg_color="#FFFFFF")
 
-        image = Image.open("Assets/Images/image5.png")  
-        logo = ctk.CTkImage(image, size=(140,100))
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=3)
 
-        logo_label2 = ctk.CTkLabel(self, image=logo, text="")
-        logo_label2.place(relx=0.8, rely=0.8)
+        # Sidebar for students
+        self.sidebar_frame = ctk.CTkFrame(self, fg_color="#3C808C")
+        self.sidebar_frame.grid(row=0, column=0, sticky="ns")
 
+        self.student_buttons = []
 
-        title = ctk.CTkLabel(self, text='Errors detected', font=ctk.CTkFont(size=16, weight="bold"))
-        title.pack(fill='both')
+        # Content area for checkboxes
+        self.content_frame = ctk.CTkFrame(self)
+        self.content_frame.grid(row=0, column=1, sticky="nswe")
+        self.content_frame.grid_rowconfigure(0, weight=1)
+        self.content_frame.grid_columnconfigure(0, weight=1)
 
-        self.checkbutton_frame = ctk.CTkFrame(self)
+        self.checkbutton_frame = ctk.CTkFrame(self.content_frame)
         self.checkbutton_frame.pack(fill="both", pady=40)
 
-        button_frame = ctk.CTkFrame(self)
+        button_frame = ctk.CTkFrame(self.content_frame)
         button_frame.pack(anchor="center")
 
         back_button = ctk.CTkButton(button_frame, text="Back", command=self.back_to_first_screen)
@@ -213,57 +220,73 @@ class SecondScreen(ctk.CTkFrame):
         self.confirm_button = ctk.CTkButton(button_frame, text="Confirm")
         self.confirm_button.pack(side='left', padx=5)
 
-
     def initialize(self):
         if self.is_initialized:
             return
 
+        self.clear_sidebar()
         self.clear_checkbutton_frame()
 
         transcripted = get_Transcription(self.controller.shared_data)
-        students = errorDetection(transcripted)
+        self.students = errorDetection(transcripted)
 
-        for student in students:
-            for phrase in student.phrases:
-                var = ctk.BooleanVar(value=False)
-                chk = ctk.CTkCheckBox(
-                    self.checkbutton_frame, 
-                    text=phrase.content, 
-                    variable=var,
-                    text_color="white",
-                    fg_color="#1D4E89",
-                    command=lambda p=phrase: self.checkbox_changed(p)
-                )
-                chk.pack(fill="x", padx=20, pady=5, anchor="center")
+        for student in self.students:
+            button = ctk.CTkButton(
+                self.sidebar_frame, 
+                text=student.name, 
+                command=lambda s=student: self.show_student_phrases(s)
+            )
+            button.pack(fill="x", padx=5, pady=5)
+            self.student_buttons.append(button)
 
         self.confirm_button.configure(
-            command=lambda: self.put_message(students)
+            command=lambda: self.put_message(self.students)
         )
 
         self.is_initialized = True
 
+    def clear_sidebar(self):
+        for button in self.student_buttons:
+            button.destroy()
+        self.student_buttons = []
+
     def clear_checkbutton_frame(self):
         for widget in self.checkbutton_frame.winfo_children():
             widget.destroy()
+
+    def show_student_phrases(self, student):
+        self.clear_checkbutton_frame()
+
+        for phrase in student.phrases:
+            var = ctk.BooleanVar(value=False)
+            chk = ctk.CTkCheckBox(
+                self.checkbutton_frame, 
+                text=phrase.content, 
+                variable=var,
+                text_color="white",
+                fg_color="#1D4E89",
+                command=lambda p=phrase: self.checkbox_changed(p)
+            )
+            chk.pack(fill="x", padx=20, pady=5, anchor="center")
 
     def back_to_first_screen(self):
         self.controller.show_frame(FirstScreen)
 
     def checkbox_changed(self, phrase):
         phrase.check = not phrase.check
-        
 
     def put_message(self, students):
         texts = []
         for student in students:
             text = 'Errors detected during the lesson:\n'
             for index, phrase in enumerate(student.phrases):
-                if phrase.check == True:
+                if phrase.check:
                     phrase.content = phrase.content.replace(student.name, '')
                     phrase.content = phrase.content.replace(' - ', '')
                     text += f'{index + 1}) {phrase.content}\n'
                     texts.append(text)
-                    send_message(text, student.email) 
+                    send_message(text, student.email)
+
 
 
 if __name__ == "__main__":

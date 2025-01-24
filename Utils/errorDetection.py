@@ -9,8 +9,7 @@ def errorDetection(users):
     model = OllamaLLM(model="llama3.2") #ollama run llama3.2-vision 11B
 
     for user in users:
-        phrases = []
-        for phrase in enumerate(user.phrases[:]):
+        for phrase in user.phrases[:]:
             print(phrase.content)
             prompt2 = "Send me only the corrected sentence: " + phrase.content
             output = ''
@@ -27,7 +26,7 @@ def errorDetection(users):
                 output += chunk
                 
             if output != '':
-                report = f'"{phrase.content}" {output.replace('Wrong', '')} - {user.name}\n Correction: '
+                report = f'"{phrase.content}" {output.replace("Wrong", "")} - {user.name}\n Correction: '
 
                 for chunk in model.stream(prompt2):
                     report += chunk
