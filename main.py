@@ -3,6 +3,7 @@ from Utils.getTranscription import get_Transcription
 from pathlib import Path
 from Utils.errorDetection import errorDetection
 from Utils.sendMessage import send_message
+from datetime import datetime
 from tkinter import PhotoImage
 import threading, time
 from PIL import Image, ImageTk
@@ -11,7 +12,7 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("LauraFix")
-        self.geometry("900x600")
+        self.geometry("900x600") 
         ctk.set_appearance_mode('light')
 
         self.grid_rowconfigure(0, weight=1)  # Permitir que a linha 0 se expanda
@@ -125,7 +126,12 @@ class FirstScreen(ctk.CTkFrame):
         for item in main_directory.iterdir():
             if item.is_dir():
                 name = item.name.split()
-                subdirectories.append(f'{name[0]} {name[1]}')
+
+                date_str = f'{name[0]} {name[1]}'
+                date_obj = datetime.strptime(date_str, f"%Y-%m-%d %H.%M.%S") 
+                formated_date = date_obj.strftime(f'%d/%m/%y %H:%M')
+
+                subdirectories.append(f'{name[2]} {name[3]} - {formated_date}')
         
         if not subdirectories: return None
 
