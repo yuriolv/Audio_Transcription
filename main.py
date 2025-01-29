@@ -1,4 +1,5 @@
 import customtkinter as ctk
+import textwrap
 from Utils.getTranscription import get_Transcription
 from pathlib import Path
 from Utils.errorDetection import errorDetection
@@ -200,31 +201,45 @@ class SecondScreen(ctk.CTkFrame):
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=3)
+        self.grid_columnconfigure(1, weight=4)
 
         # Sidebar for students
-        self.sidebar_frame = ctk.CTkFrame(self, fg_color="#3C808C")
-        self.sidebar_frame.grid(row=0, column=0, sticky="ns")
+        self.sidebar_frame = ctk.CTkFrame(self, fg_color="#3C808C", corner_radius=0)
+        self.sidebar_frame.grid(row=0, column=0, sticky='nswe')
+        self.sidebar_frame.grid_propagate(False)
+
+        self.sidebar_frame.grid_rowconfigure(0, weight=1)
+        self.sidebar_frame.grid_rowconfigure(1, weight=3)
+        self.sidebar_frame.grid_columnconfigure(0, weight=1)
+
+        image = Image.open("Assets/Images/image5.png")  
+        logo = ctk.CTkImage(image, size=(120, 70))
+        logo_label = ctk.CTkLabel(self.sidebar_frame, text='', image=logo)
+        logo_label.grid(row=0, column=0)
+
+        self.students_frame = ctk.CTkFrame(self.sidebar_frame, fg_color='transparent')
+        self.students_frame.grid(column=0, row=1, sticky='n', pady=5)
 
         self.student_buttons = []
 
         # Content area for checkboxes
-        self.content_frame = ctk.CTkFrame(self)
+        self.content_frame = ctk.CTkFrame(self,corner_radius=0)
         self.content_frame.grid(row=0, column=1, sticky="nswe")
-        self.content_frame.grid_rowconfigure(0, weight=1)
-        self.content_frame.grid_columnconfigure(0, weight=1)
 
-        self.checkbutton_frame = ctk.CTkFrame(self.content_frame)
-        self.checkbutton_frame.pack(fill="both", pady=40)
+        self.title_label = ctk.CTkLabel(self.content_frame, text='', font=ctk.CTkFont('Inter', 18, 'bold'))
+        self.title_label.pack(anchor='center', pady=(50,0))
 
-        button_frame = ctk.CTkFrame(self.content_frame)
+        self.checkbutton_frame = ctk.CTkScrollableFrame(self.content_frame, fg_color='transparent', height=400)
+        self.checkbutton_frame.pack(fill="both",expand=True, pady=(30,5))
+
+        button_frame = ctk.CTkFrame(self.content_frame, fg_color='transparent')
         button_frame.pack(anchor="center")
 
-        back_button = ctk.CTkButton(button_frame, text="Back", command=self.back_to_first_screen)
-        back_button.pack(side="left", padx=5)
+        back_button = ctk.CTkButton(button_frame, text="Back",fg_color='#3C808C', hover_color='#4092a0',command=self.back_to_first_screen)
+        back_button.pack(side="left", padx=7)
 
-        self.confirm_button = ctk.CTkButton(button_frame, text="Confirm")
-        self.confirm_button.pack(side='left', padx=5)
+        self.confirm_button = ctk.CTkButton(button_frame,fg_color='#3C808C',hover_color='#4092a0', text="Confirm")
+        self.confirm_button.pack(side='left', padx=7)
 
     def initialize(self):
         if self.is_initialized:
@@ -236,13 +251,21 @@ class SecondScreen(ctk.CTkFrame):
         transcripted = get_Transcription(self.controller.shared_data)
         self.students = errorDetection(transcripted)
 
+        self.title_label.configure(text=self.controller.shared_data)
+
         for student in self.students:
             button = ctk.CTkButton(
-                self.sidebar_frame, 
+                self.students_frame, 
+                font=ctk.CTkFont(family='Inter',size=12),
                 text=student.name, 
-                command=lambda s=student: self.show_student_phrases(s)
+                fg_color="#1a5c68",
+                command=lambda s=student: self.show_student_phrases(s),
+                height=20, 
+                hover_color='#4092a0',
+                corner_radius=10,
+                border_spacing=10
             )
-            button.pack(fill="x", padx=5, pady=5)
+            button.pack(fill="x", padx=5, pady=7)
             self.student_buttons.append(button)
 
         self.confirm_button.configure(
@@ -267,13 +290,14 @@ class SecondScreen(ctk.CTkFrame):
             var = ctk.BooleanVar(value=False)
             chk = ctk.CTkCheckBox(
                 self.checkbutton_frame, 
-                text=phrase.content, 
+                text=textwrap.fill(phrase.content, 90), 
+                font=ctk.CTkFont(family='Inter',size=14),
+                width=450,
                 variable=var,
-                text_color="white",
-                fg_color="#1D4E89",
+                text_color="black",
                 command=lambda p=phrase: self.checkbox_changed(p)
             )
-            chk.pack(fill="x", padx=20, pady=5, anchor="center")
+            chk.pack(anchor="w", padx=7, pady=7)
 
     def back_to_first_screen(self):
         self.controller.show_frame(FirstScreen)

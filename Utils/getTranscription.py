@@ -13,7 +13,7 @@ def get_Transcription(file_name):
       absolute = item.name.split()
 
       date_str = f'{absolute[0]} {absolute[1]}'
-      date_obj = datetime.strptime(date_str, f"%Y-%m-%d %H:%M:%S")
+      date_obj = datetime.strptime(date_str, f"%Y-%m-%d %H.%M.%S")
       formated_date = date_obj.strftime(f'%d/%m/%y %H:%M')
 
       name = f'{absolute[2]} {absolute[3]} - {formated_date}'
