@@ -114,6 +114,7 @@ class FirstScreen(ctk.CTkFrame):
             file_name = self.selected[0]
             self.controller.shared_data = file_name
             
+            
             procces_thread = threading.Thread(target=self.load_second_screen)
             procces_thread.start()
             self.controller.show_frame(LoadingScreen)
@@ -215,17 +216,13 @@ class SecondScreen(ctk.CTkFrame):
         self.sidebar_frame.grid(row=0, column=0, sticky='nswe')
         self.sidebar_frame.grid_propagate(False)
 
-        self.sidebar_frame.grid_rowconfigure(0, weight=1)
-        self.sidebar_frame.grid_rowconfigure(1, weight=3)
-        self.sidebar_frame.grid_columnconfigure(0, weight=1)
-
         image = Image.open("Assets/Images/image5.png")  
         logo = ctk.CTkImage(image, size=(120, 70))
         logo_label = ctk.CTkLabel(self.sidebar_frame, text='', image=logo)
-        logo_label.grid(row=0, column=0)
+        logo_label.pack(anchor='center', pady=(50,0))
 
         self.students_frame = ctk.CTkFrame(self.sidebar_frame, fg_color='transparent')
-        self.students_frame.grid(column=0, row=1, sticky='n', pady=5)
+        self.students_frame.pack(anchor='center', pady=50)
 
         self.student_buttons = []
 
@@ -248,40 +245,48 @@ class SecondScreen(ctk.CTkFrame):
         self.confirm_button.pack(side='left', padx=7)
 
     def initialize(self):
-        if self.is_initialized:
-            return
+        try:
 
-        self.clear_sidebar()
-        self.clear_checkbutton_frame()
+            transcripted = get_Transcription(self.controller.shared_data)
+            self.students = errorDetection(transcripted)
 
-        transcripted = get_Transcription(self.controller.shared_data)
-        self.students = errorDetection(transcripted)
+            self.title_label.configure(text=self.controller.shared_data)
 
-        self.title_label.configure(text=self.controller.shared_data)
+            image = Image.open("Assets/Images/profile.png")  
+            logo = ctk.CTkImage(image, size=(20, 20))
 
-        for student in self.students:
-            button = ctk.CTkButton(
-                self.students_frame, 
-                font=ctk.CTkFont(family='Inter',size=12),
-                text=student.name, 
-                fg_color="#1a5c68", 
-                height=20, 
-                hover_color='#4092a0',
-                corner_radius=10,
-                border_spacing=10
+            for student in self.students:
+                button = ctk.CTkButton(
+                    self.students_frame, 
+                    font=ctk.CTkFont(family='Inter',size=12, weight='bold'),
+                    width=40,
+                    image=logo,
+                    compound='left',
+                    anchor='w',
+                    text=student.name, 
+                    fg_color="#1a5c68", 
+                    height=20, 
+                    hover_color='#4092a0',
+                    corner_radius=10,
+                    border_spacing=11
+                )
+                button.configure(
+                    command=lambda s=student, b=button: self.select_student(s, b) 
+                )
+
+                button.pack(fill="x", padx=5, pady=4)
+                self.student_buttons.append(button)
+
+            if self.student_buttons:
+                self.student_buttons[0].invoke()
+
+            self.confirm_button.configure(
+                command=lambda: self.put_message(self.students)
             )
-            button.configure(
-                command=lambda s=student, b=button: self.select_student(s, b) 
-            )
-            button.pack(fill="x", padx=5, pady=7)
-            self.student_buttons.append(button)
-        self.student_buttons[0].invoke()
 
-        self.confirm_button.configure(
-            command=lambda: self.put_message(self.students)
-        )
-
-        self.is_initialized = True
+            self.is_initialized = True
+        except Exception as e:
+            print(e)
 
     def highlight_selected_button(self, selected_button):
         for button in self.student_buttons:
@@ -303,6 +308,7 @@ class SecondScreen(ctk.CTkFrame):
     def clear_checkbutton_frame(self):
         for widget in self.checkbutton_frame.winfo_children():
             widget.destroy()
+        self.checkbutton_frame.update_idletasks()
 
     def show_student_phrases(self, student):
         self.clear_checkbutton_frame()
@@ -313,18 +319,27 @@ class SecondScreen(ctk.CTkFrame):
                 self.checkbutton_frame, 
                 text=textwrap.fill(phrase.content, 80), 
                 font=ctk.CTkFont(family='Inter',size=14),
+                checkmark_color='white',
+                fg_color='#3C808C',
+                hover_color="#3C808C",
                 width=450,
                 variable=var,
                 text_color="black",
-                command=lambda p=phrase: self.checkbox_changed(p)
+                
             )
+            chk.configure(command=lambda p=phrase: self.checkbox_changed(p))
+
             chk.pack(anchor="w", padx=15, pady=7)
 
     def back_to_first_screen(self):
+        self.clear_sidebar()
+        self.clear_checkbutton_frame()
+        self.is_initialized = False
         self.controller.show_frame(FirstScreen)
 
     def checkbox_changed(self, phrase):
-        phrase.check = not phrase.check
+        if hasattr(phrase, 'check'):
+            phrase.check = not phrase.check
 
     def put_message(self, students):
         texts = []
