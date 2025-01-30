@@ -69,7 +69,7 @@ class FirstScreen(ctk.CTkFrame):
 
         values = self.get_files()
 
-        combobox = ctk.CTkComboBox(
+        self.combobox = ctk.CTkComboBox(
             middle_frame,
             values=values,
             state='readonly',  
@@ -82,8 +82,8 @@ class FirstScreen(ctk.CTkFrame):
             button_hover_color="#4092a0"
         )
         
-        combobox.grid(column=0, row=0, padx=10)
-        combobox.set('Lessons')
+        self.combobox.grid(column=0, row=0, padx=10)
+        self.combobox.set('Lessons')
 
         start_button = ctk.CTkButton(
             middle_frame, text="Start the correction", 
@@ -97,6 +97,12 @@ class FirstScreen(ctk.CTkFrame):
 
         self.error_label = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=14), text_color="red")
         self.error_label.grid(column=1, row=2, sticky='n')
+
+    def initialize(self):
+        """Reinicializa os valores ao retornar para a tela inicial."""
+        self.selected[0] = None
+        self.combobox.set('Lessons')
+        self.error_label.configure(text="")
 
     def select_option(self, option):
         self.error_label.configure(text="")  
@@ -196,6 +202,7 @@ class SecondScreen(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
+        self.active_button = None
         self.is_initialized = False
         self.configure(fg_color="#FFFFFF")
 
@@ -222,15 +229,14 @@ class SecondScreen(ctk.CTkFrame):
 
         self.student_buttons = []
 
-        # Content area for checkboxes
         self.content_frame = ctk.CTkFrame(self,corner_radius=0)
         self.content_frame.grid(row=0, column=1, sticky="nswe")
 
         self.title_label = ctk.CTkLabel(self.content_frame, text='', font=ctk.CTkFont('Inter', 18, 'bold'))
         self.title_label.pack(anchor='center', pady=(50,0))
 
-        self.checkbutton_frame = ctk.CTkScrollableFrame(self.content_frame, fg_color='transparent', height=400)
-        self.checkbutton_frame.pack(fill="both",expand=True, pady=(30,5))
+        self.checkbutton_frame = ctk.CTkScrollableFrame(self.content_frame, fg_color='transparent', height=340)
+        self.checkbutton_frame.pack(fill="both", pady=(30,15))
 
         button_frame = ctk.CTkFrame(self.content_frame, fg_color='transparent')
         button_frame.pack(anchor="center")
@@ -258,21 +264,36 @@ class SecondScreen(ctk.CTkFrame):
                 self.students_frame, 
                 font=ctk.CTkFont(family='Inter',size=12),
                 text=student.name, 
-                fg_color="#1a5c68",
-                command=lambda s=student: self.show_student_phrases(s),
+                fg_color="#1a5c68", 
                 height=20, 
                 hover_color='#4092a0',
                 corner_radius=10,
                 border_spacing=10
             )
+            button.configure(
+                command=lambda s=student, b=button: self.select_student(s, b) 
+            )
             button.pack(fill="x", padx=5, pady=7)
             self.student_buttons.append(button)
+        self.student_buttons[0].invoke()
 
         self.confirm_button.configure(
             command=lambda: self.put_message(self.students)
         )
 
         self.is_initialized = True
+
+    def highlight_selected_button(self, selected_button):
+        for button in self.student_buttons:
+            button.configure(fg_color="#3C808C") 
+
+        selected_button.configure(fg_color="#1a5c68")  
+        self.active_button = selected_button
+
+
+    def select_student(self, student, button):
+        self.highlight_selected_button(button)
+        self.show_student_phrases(student)
 
     def clear_sidebar(self):
         for button in self.student_buttons:
@@ -290,14 +311,14 @@ class SecondScreen(ctk.CTkFrame):
             var = ctk.BooleanVar(value=False)
             chk = ctk.CTkCheckBox(
                 self.checkbutton_frame, 
-                text=textwrap.fill(phrase.content, 90), 
+                text=textwrap.fill(phrase.content, 80), 
                 font=ctk.CTkFont(family='Inter',size=14),
                 width=450,
                 variable=var,
                 text_color="black",
                 command=lambda p=phrase: self.checkbox_changed(p)
             )
-            chk.pack(anchor="w", padx=7, pady=7)
+            chk.pack(anchor="w", padx=15, pady=7)
 
     def back_to_first_screen(self):
         self.controller.show_frame(FirstScreen)

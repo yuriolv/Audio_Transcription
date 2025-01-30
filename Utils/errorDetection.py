@@ -10,7 +10,6 @@ def errorDetection(users):
 
     for user in users:
         for phrase in user.phrases[:]:
-            print(phrase.content)
             prompt2 = "Send me only the corrected sentence: " + phrase.content
             output = ''
             new_prompt = prompt1 + phrase.content
@@ -26,7 +25,7 @@ def errorDetection(users):
                 output += chunk
                 
             if output != '':
-                report = f'"{phrase.content}" {output.replace("Wrong", "")} - {user.name}\n Correction: '
+                report = f'"{phrase.content}" {output.replace("Wrong", "")}\n Correction: '
 
                 for chunk in model.stream(prompt2):
                     report += chunk
