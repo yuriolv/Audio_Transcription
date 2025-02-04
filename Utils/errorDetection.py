@@ -1,4 +1,5 @@
 from langchain_ollama import OllamaLLM
+import textwrap
 
 
 def errorDetection(users):
@@ -25,10 +26,12 @@ def errorDetection(users):
                 output += chunk
                 
             if output != '':
-                report = f'"{phrase.content}" {output.replace("Wrong", "")}\n Correction: '
+                report = f'"{phrase.content}" {output.replace("Wrong", "")}\nCorrection: '
 
                 for chunk in model.stream(prompt2):
                     report += chunk
+                wrapped_lines = [textwrap.fill(line, 80) for line in report.split('\n')]
+                report = '\n'.join(wrapped_lines)
                 phrase.content = report
                 
                 

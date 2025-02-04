@@ -317,7 +317,7 @@ class SecondScreen(ctk.CTkFrame):
             var = ctk.BooleanVar(value=False)
             chk = ctk.CTkCheckBox(
                 self.checkbutton_frame, 
-                text=textwrap.fill(phrase.content, 80), 
+                text=phrase.content, 
                 font=ctk.CTkFont(family='Inter',size=14),
                 checkmark_color='white',
                 fg_color='#3C808C',
