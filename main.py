@@ -340,7 +340,17 @@ class SecondScreen(ctk.CTkFrame):
     def checkbox_changed(self, phrase):
         if hasattr(phrase, 'check'):
             phrase.check = not phrase.check
-
+        
+    def show_confirmation(self, success=True):
+        confirmation_window = ctk.CTkToplevel(self)
+        confirmation_window.title("Message Status")
+        confirmation_window.geometry("300x150")
+        message = "Message sent successfully!" if success else "Failed to send the message!"
+        label = ctk.CTkLabel(confirmation_window, text=message, font=ctk.CTkFont(family='Inter', size=14))
+        label.pack(pady=20)
+        ok_button = ctk.CTkButton(confirmation_window, text="OK", fg_color="#3C808C", text_color='#FFFFFF', hover_color="#4092a0", command=confirmation_window.destroy)
+        ok_button.pack(pady=10, padx=20)
+    
     def put_message(self, students):
         texts = []
         for student in students:
@@ -352,8 +362,11 @@ class SecondScreen(ctk.CTkFrame):
                     text += f'{index + 1}) {phrase.content}\n'
                     texts.append(text)
                     send_message(text, student.email)
-
-
+                    try:
+                        send_message(text, student.email)
+                    except Exception as e:
+                        success = False
+        self.show_confirmation(success=True)
 
 if __name__ == "__main__":
     app = App()
