@@ -304,6 +304,10 @@ class SecondScreen(ctk.CTkFrame):
         for button in self.student_buttons:
             button.destroy()
         self.student_buttons = []
+    
+    def clear_confirmation(self):
+        self.confirmation_window.destroy()
+        self.confirmation_window.update_idletasks()
 
     def clear_checkbutton_frame(self):
         for widget in self.checkbutton_frame.winfo_children():
@@ -334,6 +338,7 @@ class SecondScreen(ctk.CTkFrame):
     def back_to_first_screen(self):
         self.clear_sidebar()
         self.clear_checkbutton_frame()
+        self.clear_confirmation()
         self.is_initialized = False
         self.controller.show_frame(FirstScreen)
 
@@ -341,15 +346,41 @@ class SecondScreen(ctk.CTkFrame):
         if hasattr(phrase, 'check'):
             phrase.check = not phrase.check
         
-    def show_confirmation(self, success=True):
-        confirmation_window = ctk.CTkToplevel(self)
-        confirmation_window.title("Message Status")
-        confirmation_window.geometry("300x150")
+    def show_confirmation(self, success):
+        self.confirmation_window = ctk.CTkToplevel(self)
+        self.confirmation_window.title("Message Status")
+        icon_image = ImageTk.PhotoImage(file="Assets/Images/image15.ico")
+        self.confirmation_window.iconphoto(False, icon_image)
+
+        # Dimensões da janela de confirmação
+        window_width = 300
+        window_height = 150
+        self.confirmation_window.geometry(f"{window_width}x{window_height}")
+
+        # Calcula a posição para centralizar
+        x_offset = self.winfo_x() + (self.winfo_width() - window_width) // 2
+        y_offset = self.winfo_y() + (self.winfo_height() - window_height) // 2
+        self.confirmation_window.geometry(f"+{x_offset}+{y_offset}")
+
+        # Configurações adicionais para exibir no topo
+        self.confirmation_window.transient(self)
+        self.confirmation_window.grab_set()
+        self.confirmation_window.lift()
+        self.confirmation_window.focus_force()
+
+        # Mensagem de confirmação
         message = "Message sent successfully!" if success else "Failed to send the message!"
-        label = ctk.CTkLabel(confirmation_window, text=message, font=ctk.CTkFont(family='Inter', size=14))
+        label = ctk.CTkLabel(self.confirmation_window, text=message, font=ctk.CTkFont(family='Inter', size=14))
         label.pack(pady=20)
-        ok_button = ctk.CTkButton(confirmation_window, text="OK", fg_color="#3C808C", text_color='#FFFFFF', hover_color="#4092a0", command=confirmation_window.destroy)
-        ok_button.pack(pady=10, padx=20)
+        ok_button = ctk.CTkButton(
+            self.confirmation_window,
+            text="OK",
+            fg_color="#3C808C",
+            text_color='#FFFFFF',
+            hover_color="#4092a0",
+            command=self.back_to_first_screen
+        )
+        ok_button.pack()
     
     def put_message(self, students):
         texts = []
@@ -361,12 +392,11 @@ class SecondScreen(ctk.CTkFrame):
                     phrase.content = phrase.content.replace(' - ', '')
                     text += f'{index + 1}) {phrase.content}\n'
                     texts.append(text)
-                    send_message(text, student.email)
                     try:
-                        send_message(text, student.email)
+                        response = send_message(text, student.email)
                     except Exception as e:
-                        success = False
-        self.show_confirmation(success=True)
+                        print(e)
+        self.show_confirmation(response)
 
 if __name__ == "__main__":
     app = App()

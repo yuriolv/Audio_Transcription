@@ -10,7 +10,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ZOOM_TOKEN = os.environ.get('ZOOM_TOKEN')
 ZOOM_API_URL = os.environ.get('END_MESSAGES')
 
-load_dotenv(find_dotenv())
 
 def send_message(message, contact_id):
     refresh()
@@ -29,9 +28,11 @@ def send_message(message, contact_id):
 
     if response.status_code == 201:
         print("Mensagem enviada com sucesso!")
+        return True
     else:
         print(f"Erro ao enviar a mensagem: {response.status_code}")
         print(response.json())
+        return False
 
 if __name__ == "__main__":
     send_message("ol[a]", "yuri25olv@gmail.com")
