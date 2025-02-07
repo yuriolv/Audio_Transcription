@@ -66,7 +66,7 @@ class FirstScreen(ctk.CTkFrame):
         title.grid(column=1, row=0, sticky='s')
 
         image = Image.open("Assets/Images/image5.png")  
-        logo = ctk.CTkImage(image, size=(140,100))
+        logo = ctk.CTkImage(image, size=(160,95))
 
         logo_label = ctk.CTkLabel(self, image=logo, text="", fg_color="#3C808C")
         logo_label.grid(column=0, row=0,rowspan=3,sticky='nsew')
