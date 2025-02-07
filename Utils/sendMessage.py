@@ -7,12 +7,12 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-ZOOM_TOKEN = os.environ.get('ZOOM_TOKEN')
-ZOOM_API_URL = os.environ.get('END_MESSAGES')
-
 
 def send_message(message, contact_id):
     refresh()
+
+    ZOOM_TOKEN = os.environ.get('ZOOM_TOKEN')
+    ZOOM_API_URL = os.environ.get('END_MESSAGES')
     
     headers = {
         "Authorization": f"Bearer {ZOOM_TOKEN}",

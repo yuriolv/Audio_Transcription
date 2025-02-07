@@ -29,11 +29,12 @@ def refresh():
         access_token = token_data.get("access_token")
         refresh_token = token_data.get("refresh_token")
         expires_in = token_data.get("expires_in")
-        
+
         set_key(find_dotenv(), 'ZOOM_TOKEN', access_token)
         set_key(find_dotenv(), 'REFRESH_TOKEN', refresh_token)
 
         load_dotenv(find_dotenv(), override=True)
+
 
     else:
         print(f"Erro ao obter o novo token: {response.status_code} - {response.text}")

@@ -13,7 +13,18 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("LauraFix")
-        self.geometry("900x600") 
+        # Dimensões da janela
+        window_width = 900
+        window_height = 600
+
+        #Calcula posição para centralizar
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x_offset = int((screen_width - window_width) / 2)
+        y_offset = int((screen_height - window_height) / 2)
+
+        #Define a geometria centralizada
+        self.geometry(f"{window_width}x{window_height}+{x_offset}+{y_offset}") 
         ctk.set_appearance_mode('light')
 
         self.grid_rowconfigure(0, weight=1)  # Permitir que a linha 0 se expanda
@@ -256,6 +267,7 @@ class SecondScreen(ctk.CTkFrame):
             logo = ctk.CTkImage(image, size=(20, 20))
 
             for student in self.students:
+                if len(student.phrases) == 0: continue
                 button = ctk.CTkButton(
                     self.students_frame, 
                     font=ctk.CTkFont(family='Inter',size=12, weight='bold'),
@@ -308,6 +320,7 @@ class SecondScreen(ctk.CTkFrame):
     def clear_confirmation(self):
         self.confirmation_window.destroy()
         self.confirmation_window.update_idletasks()
+        self.back_to_first_screen()
 
     def clear_checkbutton_frame(self):
         for widget in self.checkbutton_frame.winfo_children():
@@ -338,7 +351,6 @@ class SecondScreen(ctk.CTkFrame):
     def back_to_first_screen(self):
         self.clear_sidebar()
         self.clear_checkbutton_frame()
-        self.clear_confirmation()
         self.is_initialized = False
         self.controller.show_frame(FirstScreen)
 
@@ -348,19 +360,18 @@ class SecondScreen(ctk.CTkFrame):
         
     def show_confirmation(self, success):
         self.confirmation_window = ctk.CTkToplevel(self)
+        self.confirmation_window.iconbitmap("Assets/Images/image15.ico")  # Definido logo após criar a janela
         self.confirmation_window.title("Message Status")
-        icon_image = ImageTk.PhotoImage(file="Assets/Images/image15.ico")
-        self.confirmation_window.iconphoto(False, icon_image)
 
-        # Dimensões da janela de confirmação
         window_width = 300
         window_height = 150
         self.confirmation_window.geometry(f"{window_width}x{window_height}")
 
-        # Calcula a posição para centralizar
-        x_offset = self.winfo_x() + (self.winfo_width() - window_width) // 2
-        y_offset = self.winfo_y() + (self.winfo_height() - window_height) // 2
-        self.confirmation_window.geometry(f"+{x_offset}+{y_offset}")
+        screen_width = self.confirmation_window.winfo_screenwidth()
+        screen_height = self.confirmation_window.winfo_screenheight()
+        x_offset = (screen_width - window_width) // 2
+        y_offset = (screen_height - window_height) // 2
+        self.confirmation_window.geometry(f"{window_width}x{window_height}+{x_offset}+{y_offset}")
 
         # Configurações adicionais para exibir no topo
         self.confirmation_window.transient(self)
@@ -378,16 +389,22 @@ class SecondScreen(ctk.CTkFrame):
             fg_color="#3C808C",
             text_color='#FFFFFF',
             hover_color="#4092a0",
-            command=self.back_to_first_screen
+            command=self.clear_confirmation
         )
         ok_button.pack()
+
+        # Garante que o ícone é reconfigurado após qualquer sobrescrição
+        self.confirmation_window.after(205, lambda: self.confirmation_window.iconbitmap("Assets/Images/image15.ico"))
+
     
     def put_message(self, students):
+        count = 0
         texts = []
         for student in students:
             text = 'Errors detected during the lesson:\n'
             for index, phrase in enumerate(student.phrases):
                 if phrase.check:
+                    count += 1
                     phrase.content = phrase.content.replace(student.name, '')
                     phrase.content = phrase.content.replace(' - ', '')
                     text += f'{index + 1}) {phrase.content}\n'
@@ -396,7 +413,11 @@ class SecondScreen(ctk.CTkFrame):
                         response = send_message(text, student.email)
                     except Exception as e:
                         print(e)
-        self.show_confirmation(response)
+        
+        if count > 0:
+            self.show_confirmation(response)
+        else:    
+            self.show_confirmation(False)
 
 if __name__ == "__main__":
     app = App()
