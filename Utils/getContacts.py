@@ -31,8 +31,8 @@ def get_email(user_name):
         raise Exception(response.text)
     
     for key, value in contacts.items():
-        if user_name.lower() == key.lower():
+        if user_name.lower() in key.lower():
             return value
 
 if __name__ == "__main__":
-    email = get_email('Erandi matos Magalhaes')
+    email = get_email('PontoQuente182')

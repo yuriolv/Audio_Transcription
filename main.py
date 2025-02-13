@@ -365,7 +365,6 @@ class SecondScreen(ctk.CTkFrame):
 
         window_width = 300
         window_height = 150
-        self.confirmation_window.geometry(f"{window_width}x{window_height}")
 
         screen_width = self.confirmation_window.winfo_screenwidth()
         screen_height = self.confirmation_window.winfo_screenheight()
@@ -394,30 +393,27 @@ class SecondScreen(ctk.CTkFrame):
         ok_button.pack()
 
         # Garante que o ícone é reconfigurado após qualquer sobrescrição
-        self.confirmation_window.after(205, lambda: self.confirmation_window.iconbitmap("Assets/Images/image15.ico"))
+        self.confirmation_window.after(201, lambda: self.confirmation_window.iconbitmap("Assets/Images/image15.ico"))
 
     
     def put_message(self, students):
-        count = 0
-        texts = []
         for student in students:
+            found = False
             text = 'Errors detected during the lesson:\n'
             for index, phrase in enumerate(student.phrases):
                 if phrase.check:
-                    count += 1
+                    found = True
                     phrase.content = phrase.content.replace(student.name, '')
                     phrase.content = phrase.content.replace(' - ', '')
                     text += f'{index + 1}) {phrase.content}\n'
-                    texts.append(text)
-                    try:
-                        response = send_message(text, student.email)
-                    except Exception as e:
-                        print(e)
+
+            if found:
+                try:
+                    response = send_message(text, student.email)
+                    self.show_confirmation(response)
+                except Exception as e:
+                    print(e)
         
-        if count > 0:
-            self.show_confirmation(response)
-        else:    
-            self.show_confirmation(False)
 
 if __name__ == "__main__":
     app = App()
