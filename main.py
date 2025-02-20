@@ -353,10 +353,10 @@ class SecondScreen(ctk.CTkFrame):
         new_text = self.textbox.get("1.0", "end-1c")  # Edita o texto
         print(f"Novo texto : {new_text}")
         if phrase:
-            phrase.content = new_text  # Update phrase content
+            phrase.content = new_text  # Atualiza a frase
             print(f"Novo texto : {new_text}")
-            self.show_student_phrases(self.current_student)  # Refresh UI
-        self.edit_window.destroy()  # Close edit window    
+            self.show_student_phrases(self.current_student)  # Atualiza a tela com a frase editada
+        self.edit_window.destroy()      
         
 
     def highlight_selected_button(self, selected_button):
