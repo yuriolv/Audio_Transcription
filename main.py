@@ -248,7 +248,13 @@ class SecondScreen(ctk.CTkFrame):
 
         button_frame = ctk.CTkFrame(self.content_frame, fg_color='transparent')
         button_frame.pack(anchor="center")
-
+        
+        self.selected_phrase = None
+        self.phrase = None
+        
+        self.edit_button = ctk.CTkButton(button_frame, fg_color='#3C808C', hover_color='#4092a0', text="Edit", command=lambda:self.edit_window(self.phrase))
+        self.edit_button.pack(side="left", padx=7)
+        
         back_button = ctk.CTkButton(button_frame, text="Back",fg_color='#3C808C', hover_color='#4092a0',command=self.back_to_first_screen)
         back_button.pack(side="left", padx=7)
 
@@ -299,6 +305,58 @@ class SecondScreen(ctk.CTkFrame):
             self.is_initialized = True
         except Exception as e:
             print(e)
+    
+    def select_phrase(self, phrase):
+        self.phrase = phrase
+    
+    def edit_window(self, phrase):
+        if phrase is None:
+            print("Error: The phrase passed to edit_window is None.")  
+            return
+    
+        self.edit_window = ctk.CTkToplevel(self)
+        self.edit_window.iconbitmap("Assets/Images/image15.ico")
+        self.edit_window.title("Edit Message")
+        
+        window_width = 500
+        window_height = 250
+
+        screen_width = self.edit_window.winfo_screenwidth()
+        screen_height = self.edit_window.winfo_screenheight()
+        x_offset = (screen_width - window_width) // 2
+        y_offset = (screen_height - window_height) // 2
+        self.edit_window.geometry(f"{window_width}x{window_height}+{x_offset}+{y_offset}")
+        
+        self.edit_window.transient(self)
+        self.edit_window.grab_set()
+        self.edit_window.lift()
+        self.edit_window.focus_force()
+        
+        # Display da frase para edição
+        self.textbox = ctk.CTkTextbox(self.edit_window, width=400, height=150)  
+        self.textbox.pack(side="top", padx=15, pady=10, expand=True)
+        self.edit_window.after(200, lambda: self.edit_window.update_idletasks())  
+        
+        self.save_button = ctk.CTkButton(self.edit_window, text="Save", fg_color="#3C808C", hover_color="#4092a0", 
+                                        command=lambda: self.save_changes(phrase))
+        self.save_button.pack(side="left", padx=15, pady=10, expand=True)
+
+        self.cancel_button = ctk.CTkButton(self.edit_window, text="Cancel", fg_color="#808080", hover_color="#909090", 
+                                        command=self.edit_window.destroy)
+        self.cancel_button.pack(side="left", padx=15, pady=10, expand=True)
+        
+        self.edit_window.update()
+        self.edit_window.after(201, lambda: self.edit_window.iconbitmap("Assets/Images/image15.ico"))
+        
+    def save_changes(self, phrase):
+        new_text = self.textbox.get("1.0", "end-1c")  # Edita o texto
+        print(f"Novo texto : {new_text}")
+        if phrase:
+            phrase.content = new_text  # Update phrase content
+            print(f"Novo texto : {new_text}")
+            self.show_student_phrases(self.current_student)  # Refresh UI
+        self.edit_window.destroy()  # Close edit window    
+        
 
     def highlight_selected_button(self, selected_button):
         for button in self.student_buttons:
@@ -329,7 +387,8 @@ class SecondScreen(ctk.CTkFrame):
 
     def show_student_phrases(self, student):
         self.clear_checkbutton_frame()
-
+        self.current_student = student
+        
         for phrase in student.phrases:
             var = ctk.BooleanVar(value=False)
             chk = ctk.CTkCheckBox(
@@ -357,6 +416,7 @@ class SecondScreen(ctk.CTkFrame):
     def checkbox_changed(self, phrase):
         if hasattr(phrase, 'check'):
             phrase.check = not phrase.check
+        self.select_phrase(phrase)
         
     def show_confirmation(self, success):
         self.confirmation_window = ctk.CTkToplevel(self)
@@ -403,6 +463,7 @@ class SecondScreen(ctk.CTkFrame):
             for index, phrase in enumerate(student.phrases):
                 if phrase.check:
                     found = True
+                    print(f"Phrase: {phrase.content} | Checked: {phrase.check}")
                     phrase.content = phrase.content.replace(student.name, '')
                     phrase.content = phrase.content.replace(' - ', '')
                     text += f'{index + 1}) {phrase.content}\n'
