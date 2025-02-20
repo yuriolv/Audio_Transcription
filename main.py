@@ -335,6 +335,7 @@ class SecondScreen(ctk.CTkFrame):
         # Display da frase para edição
         self.textbox = ctk.CTkTextbox(self.edit_window, width=400, height=150)  
         self.textbox.pack(side="top", padx=15, pady=10, expand=True)
+        self.textbox.insert("0.0", phrase.content)
         self.edit_window.after(200, lambda: self.edit_window.update_idletasks())  
         
         self.save_button = ctk.CTkButton(self.edit_window, text="Save", fg_color="#3C808C", hover_color="#4092a0", 
