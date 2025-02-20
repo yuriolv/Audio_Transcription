@@ -249,10 +249,10 @@ class SecondScreen(ctk.CTkFrame):
         button_frame = ctk.CTkFrame(self.content_frame, fg_color='transparent')
         button_frame.pack(anchor="center")
         
+
         self.selected_phrase = None
-        self.phrase = None
         
-        self.edit_button = ctk.CTkButton(button_frame, fg_color='#3C808C', hover_color='#4092a0', text="Edit", command=lambda:self.edit_window(self.phrase))
+        self.edit_button = ctk.CTkButton(button_frame, fg_color='#3C808C', hover_color='#4092a0', text="Edit", command=lambda:self.edit_phrase(self.selected_phrase))
         self.edit_button.pack(side="left", padx=7)
         
         back_button = ctk.CTkButton(button_frame, text="Back",fg_color='#3C808C', hover_color='#4092a0',command=self.back_to_first_screen)
@@ -307,9 +307,9 @@ class SecondScreen(ctk.CTkFrame):
             print(e)
     
     def select_phrase(self, phrase):
-        self.phrase = phrase
+        self.selected_phrase = phrase
     
-    def edit_window(self, phrase):
+    def edit_phrase(self, phrase):
         if phrase is None:
             print("Error: The phrase passed to edit_window is None.")  
             return
@@ -413,11 +413,15 @@ class SecondScreen(ctk.CTkFrame):
         self.clear_checkbutton_frame()
         self.is_initialized = False
         self.controller.show_frame(FirstScreen)
+        self.select_phrase(None)
 
     def checkbox_changed(self, phrase):
         if hasattr(phrase, 'check'):
             phrase.check = not phrase.check
-        self.select_phrase(phrase)
+        if phrase.check:
+            self.select_phrase(phrase)
+        else:
+            self.select_phrase(None)
         
     def show_confirmation(self, success):
         self.confirmation_window = ctk.CTkToplevel(self)
