@@ -1,13 +1,10 @@
-import os
-import subprocess
+from reportlab.pdfgen import canvas
 
-# Base do caminho no AppData
-user = os.getlogin()
-base_path = os.path.join(os.environ["LOCALAPPDATA"],"Programs" ,"Ollama", "ollama app.exe")
-print(user)
+def criar_pdf(nome_arquivo):
+    c = canvas.Canvas(nome_arquivo)
+    c.drawString(100, 750, "Erros recentes:")
+    c.drawString(150, 850, "Olá, este é um exemplo!")
+    c.drawString(100, 950, "Olá, este é um PDF gerado com Python!")
+    c.save()
 
-# Executa o Ollama
-if os.path.exists(base_path):
-    subprocess.run(["runas", f"/user:{user}", base_path])
-else:
-    print("O caminho do Ollama não foi encontrado.")
+criar_pdf("meu_arquivo.pdf")
