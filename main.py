@@ -13,7 +13,18 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("LauraFix")
-        self.geometry("900x600") 
+        # Dimensões da janela
+        window_width = 900
+        window_height = 600
+
+        #Calcula posição para centralizar
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x_offset = int((screen_width - window_width) / 2)
+        y_offset = int((screen_height - window_height) / 2)
+
+        #Define a geometria centralizada
+        self.geometry(f"{window_width}x{window_height}+{x_offset}+{y_offset}") 
         ctk.set_appearance_mode('light')
 
         self.grid_rowconfigure(0, weight=1)  # Permitir que a linha 0 se expanda
@@ -55,7 +66,7 @@ class FirstScreen(ctk.CTkFrame):
         title.grid(column=1, row=0, sticky='s')
 
         image = Image.open("Assets/Images/image5.png")  
-        logo = ctk.CTkImage(image, size=(140,100))
+        logo = ctk.CTkImage(image, size=(160,95))
 
         logo_label = ctk.CTkLabel(self, image=logo, text="", fg_color="#3C808C")
         logo_label.grid(column=0, row=0,rowspan=3,sticky='nsew')
@@ -237,7 +248,13 @@ class SecondScreen(ctk.CTkFrame):
 
         button_frame = ctk.CTkFrame(self.content_frame, fg_color='transparent')
         button_frame.pack(anchor="center")
+        
 
+        self.selected_phrase = None
+        
+        self.edit_button = ctk.CTkButton(button_frame, fg_color='#3C808C', hover_color='#4092a0', text="Edit", command=lambda:self.edit_phrase(self.selected_phrase))
+        self.edit_button.pack(side="left", padx=7)
+        
         back_button = ctk.CTkButton(button_frame, text="Back",fg_color='#3C808C', hover_color='#4092a0',command=self.back_to_first_screen)
         back_button.pack(side="left", padx=7)
 
@@ -256,6 +273,7 @@ class SecondScreen(ctk.CTkFrame):
             logo = ctk.CTkImage(image, size=(20, 20))
 
             for student in self.students:
+                if len(student.phrases) == 0: continue
                 button = ctk.CTkButton(
                     self.students_frame, 
                     font=ctk.CTkFont(family='Inter',size=12, weight='bold'),
@@ -287,6 +305,59 @@ class SecondScreen(ctk.CTkFrame):
             self.is_initialized = True
         except Exception as e:
             print(e)
+    
+    def select_phrase(self, phrase):
+        self.selected_phrase = phrase
+    
+    def edit_phrase(self, phrase):
+        if phrase is None:
+            print("Error: The phrase passed to edit_window is None.")  
+            return
+    
+        self.edit_window = ctk.CTkToplevel(self)
+        self.edit_window.iconbitmap("Assets/Images/image15.ico")
+        self.edit_window.title("Edit Message")
+        
+        window_width = 500
+        window_height = 250
+
+        screen_width = self.edit_window.winfo_screenwidth()
+        screen_height = self.edit_window.winfo_screenheight()
+        x_offset = (screen_width - window_width) // 2
+        y_offset = (screen_height - window_height) // 2
+        self.edit_window.geometry(f"{window_width}x{window_height}+{x_offset}+{y_offset}")
+        
+        self.edit_window.transient(self)
+        self.edit_window.grab_set()
+        self.edit_window.lift()
+        self.edit_window.focus_force()
+        
+        # Display da frase para edição
+        self.textbox = ctk.CTkTextbox(self.edit_window, width=400, height=150)  
+        self.textbox.pack(side="top", padx=15, pady=10, expand=True)
+        self.textbox.insert("0.0", phrase.content)
+        self.edit_window.after(200, lambda: self.edit_window.update_idletasks())  
+        
+        self.save_button = ctk.CTkButton(self.edit_window, text="Save", fg_color="#3C808C", hover_color="#4092a0", 
+                                        command=lambda: self.save_changes(phrase))
+        self.save_button.pack(side="left", padx=15, pady=10, expand=True)
+
+        self.cancel_button = ctk.CTkButton(self.edit_window, text="Cancel", fg_color="#808080", hover_color="#909090", 
+                                        command=self.edit_window.destroy)
+        self.cancel_button.pack(side="left", padx=15, pady=10, expand=True)
+        
+        self.edit_window.update()
+        self.edit_window.after(201, lambda: self.edit_window.iconbitmap("Assets/Images/image15.ico"))
+        
+    def save_changes(self, phrase):
+        new_text = self.textbox.get("1.0", "end-1c")  # Edita o texto
+        print(f"Novo texto : {new_text}")
+        if phrase:
+            phrase.content = new_text  # Atualiza a frase
+            print(f"Novo texto : {new_text}")
+            self.show_student_phrases(self.current_student)  # Atualiza a tela com a frase editada
+        self.edit_window.destroy()      
+        
 
     def highlight_selected_button(self, selected_button):
         for button in self.student_buttons:
@@ -304,6 +375,11 @@ class SecondScreen(ctk.CTkFrame):
         for button in self.student_buttons:
             button.destroy()
         self.student_buttons = []
+    
+    def clear_confirmation(self):
+        self.confirmation_window.destroy()
+        self.confirmation_window.update_idletasks()
+        self.back_to_first_screen()
 
     def clear_checkbutton_frame(self):
         for widget in self.checkbutton_frame.winfo_children():
@@ -312,7 +388,8 @@ class SecondScreen(ctk.CTkFrame):
 
     def show_student_phrases(self, student):
         self.clear_checkbutton_frame()
-
+        self.current_student = student
+        
         for phrase in student.phrases:
             var = ctk.BooleanVar(value=False)
             chk = ctk.CTkCheckBox(
@@ -336,24 +413,73 @@ class SecondScreen(ctk.CTkFrame):
         self.clear_checkbutton_frame()
         self.is_initialized = False
         self.controller.show_frame(FirstScreen)
+        self.select_phrase(None)
 
     def checkbox_changed(self, phrase):
         if hasattr(phrase, 'check'):
             phrase.check = not phrase.check
+        if phrase.check:
+            self.select_phrase(phrase)
+        else:
+            self.select_phrase(None)
+        
+    def show_confirmation(self, success):
+        self.confirmation_window = ctk.CTkToplevel(self)
+        self.confirmation_window.iconbitmap("Assets/Images/image15.ico")  # Definido logo após criar a janela
+        self.confirmation_window.title("Message Status")
 
+        window_width = 300
+        window_height = 150
+
+        screen_width = self.confirmation_window.winfo_screenwidth()
+        screen_height = self.confirmation_window.winfo_screenheight()
+        x_offset = (screen_width - window_width) // 2
+        y_offset = (screen_height - window_height) // 2
+        self.confirmation_window.geometry(f"{window_width}x{window_height}+{x_offset}+{y_offset}")
+
+        # Configurações adicionais para exibir no topo
+        self.confirmation_window.transient(self)
+        self.confirmation_window.grab_set()
+        self.confirmation_window.lift()
+        self.confirmation_window.focus_force()
+
+        # Mensagem de confirmação
+        message = "Message sent successfully!" if success else "Failed to send the message!"
+        label = ctk.CTkLabel(self.confirmation_window, text=message, font=ctk.CTkFont(family='Inter', size=14))
+        label.pack(pady=20)
+        ok_button = ctk.CTkButton(
+            self.confirmation_window,
+            text="OK",
+            fg_color="#3C808C",
+            text_color='#FFFFFF',
+            hover_color="#4092a0",
+            command=self.clear_confirmation
+        )
+        ok_button.pack()
+
+        # Garante que o ícone é reconfigurado após qualquer sobrescrição
+        self.confirmation_window.after(201, lambda: self.confirmation_window.iconbitmap("Assets/Images/image15.ico"))
+
+    
     def put_message(self, students):
-        texts = []
         for student in students:
+            found = False
             text = 'Errors detected during the lesson:\n'
             for index, phrase in enumerate(student.phrases):
                 if phrase.check:
+                    found = True
+                    print(f"Phrase: {phrase.content} | Checked: {phrase.check}")
                     phrase.content = phrase.content.replace(student.name, '')
                     phrase.content = phrase.content.replace(' - ', '')
                     text += f'{index + 1}) {phrase.content}\n'
-                    texts.append(text)
-                    send_message(text, student.email)
 
-
+            if found:
+                try:
+                    response = send_message(text, student.email)
+                    self.show_confirmation(response)
+                except Exception as e:
+                    print(e)
+        
 
 if __name__ == "__main__":
     app = App()
