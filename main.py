@@ -35,7 +35,7 @@ class App(ctk.CTk):
         self.frames = {}
         self.shared_data = None
 
-        for F in (FirstScreen, SecondScreen, LoadingScreen):
+        for F in (FirstScreen, SecondScreen, LoadingScreen, ReportScreen):
             frame = F(parent=self, controller=self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
@@ -43,6 +43,7 @@ class App(ctk.CTk):
         self.show_frame(FirstScreen)
 
     def show_frame(self, tela):
+        print(f"Switching to: {tela}")
         frame = self.frames[tela]
         if hasattr(frame, "initialize"):
             frame.initialize()
@@ -104,7 +105,17 @@ class FirstScreen(ctk.CTkFrame):
             font=ctk.CTkFont(family='Inter')
             )
             
-        start_button.grid(column=1, row=0, padx=5)
+        start_button.grid(column=1, row=0, padx=10)
+        
+        report_button = ctk.CTkButton(
+            middle_frame, text="Go to report", 
+            command=lambda: self.go_to_report_screen(), 
+            fg_color="#3C808C", text_color='#FFFFFF', 
+            hover_color="#4092a0", 
+            font=ctk.CTkFont(family='Inter')
+            )
+        
+        report_button.grid(column=2, row=0, padx=10)
 
         self.error_label = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=14), text_color="red")
         self.error_label.grid(column=1, row=2, sticky='n')
@@ -117,7 +128,25 @@ class FirstScreen(ctk.CTkFrame):
 
     def select_option(self, option):
         self.error_label.configure(text="")  
-        self.selected[0] = option
+        self.selected[0] = option   
+
+    def go_to_report_screen(self):
+        if self.selected[0] is not None:
+            file_name = self.selected[0]
+            self.controller.shared_data = file_name
+            
+            
+            procces_thread = threading.Thread(target=self.load_report_screen)
+            procces_thread.start()
+            self.controller.show_frame(LoadingScreen)
+
+        else:
+            self.error_label.configure(text="No file selected! Please select one and try again.")
+            return
+        
+    def load_report_screen(self):
+        print("Loading report screen...")
+        self.controller.show_frame(ReportScreen)
 
     def go_to_second_screen(self):
 
@@ -208,7 +237,113 @@ class LoadingScreen(ctk.CTkFrame):
                     break  # Sai do loop ao atingir o final do GIF
             return frames
 
+class ReportScreen(ctk.CTkFrame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        self.controller = controller
+        self.active_button = None
+        self.is_initialized = False
+        self.configure(fg_color="#FFFFFF")
 
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=4)
+
+        # Sidebar for students
+        self.sidebar_frame = ctk.CTkFrame(self, fg_color="#3C808C", corner_radius=0)
+        self.sidebar_frame.grid(row=0, column=0, sticky='nswe')
+        self.sidebar_frame.grid_propagate(False)
+
+        image = Image.open("Assets/Images/image5.png")  
+        logo = ctk.CTkImage(image, size=(120, 70))
+        logo_label = ctk.CTkLabel(self.sidebar_frame, text='', image=logo)
+        logo_label.pack(anchor='center', pady=(50,0))
+
+        self.students_frame = ctk.CTkFrame(self.sidebar_frame, fg_color='transparent')
+        self.students_frame.pack(anchor='center', pady=50)
+
+        self.student_buttons = []
+        
+        self.content_frame = ctk.CTkFrame(self,corner_radius=0)
+        self.content_frame.grid(row=0, column=1, sticky="nswe")
+
+        self.title_label = ctk.CTkLabel(self.content_frame, text='', font=ctk.CTkFont('Inter', 18, 'bold'))
+        self.title_label.pack(anchor='center', pady=(50,0))
+
+        button_frame = ctk.CTkFrame(self.content_frame, fg_color='transparent')
+        button_frame.pack(anchor="center")
+        
+        back_button = ctk.CTkButton(button_frame, text="Back",fg_color='#3C808C', hover_color='#4092a0',command = lambda: self.go_to_first_screen())
+        back_button.pack(side="left", padx=7)
+
+        self.confirm_button = ctk.CTkButton(button_frame,fg_color='#3C808C',hover_color='#4092a0', text="Confirm")
+        self.confirm_button.pack(side='left', padx=7)
+    
+    def initialize(self):
+        try:
+
+            transcripted = get_Transcription(self.controller.shared_data)
+            self.students = errorDetection(transcripted)
+
+            self.title_label.configure(text=self.controller.shared_data)
+
+            image = Image.open("Assets/Images/profile.png")  
+            logo = ctk.CTkImage(image, size=(20, 20))
+
+            for student in self.students:
+                button = ctk.CTkButton(
+                    self.students_frame, 
+                    font=ctk.CTkFont(family='Inter',size=12, weight='bold'),
+                    width=40,
+                    image=logo,
+                    compound='left',
+                    anchor='w',
+                    text=student.name, 
+                    fg_color="#1a5c68", 
+                    height=20, 
+                    hover_color='#4092a0',
+                    corner_radius=10,
+                    border_spacing=11
+                )
+                button.configure(
+                    command=lambda s=student, b=button: self.select_student(s, b) 
+                )
+
+                button.pack(fill="x", padx=5, pady=4)
+                self.student_buttons.append(button)
+
+            if self.student_buttons:
+                self.student_buttons[0].invoke()
+
+            '''self.confirm_button.configure(
+                command=lambda: 
+            )'''
+
+            self.is_initialized = True
+        except Exception as e:
+            print("Error initializing ReportScreen", e)
+    
+    def highlight_selected_button(self, selected_button):
+        for button in self.student_buttons:
+            button.configure(fg_color="#3C808C") 
+
+        selected_button.configure(fg_color="#1a5c68")  
+        self.active_button = selected_button
+    
+    def select_student(self, student, button):
+        print(f"the student {student.name} was selected!!")
+        self.highlight_selected_button(button)
+    
+    def clear_sidebar(self):
+        for button in self.student_buttons:
+            button.destroy()
+        self.student_buttons = []
+    
+    def go_to_first_screen(self):
+        print("Back button pressed!!")
+        self.clear_sidebar()
+        self.is_initialized = False
+        self.controller.show_frame(FirstScreen)
 
 class SecondScreen(ctk.CTkFrame):
     def __init__(self, parent, controller):
