@@ -8,6 +8,7 @@ class Transcription:
         self.date = None
         self.file = file
         self.transcripted = None
+        self.participation = {}
         self.students = []
 
     def getTranscription(self):
@@ -36,6 +37,42 @@ class Transcription:
             }
 
         self.transcripted = messages
+
+    def getAnalysis(self, file, user):
+        with open(file, encoding='utf-8') as f:
+            text = f.read()
+        nltk.download('punkt_tab')
+        messages = {}
+
+        lines = text.strip().split("\n\n")
+        print(len(lines))
+
+        for line in lines:
+            parts = line.split("\n")
+
+            header = parts[0]
+            content = nltk.sent_tokenize(parts[1])
+
+            vocab = self.getVocab(content, user)
+            user.vocab.extend(vocab) #coloco novas palavras ao vocabulário
+            
+            sender, time = header.strip("[]").rsplit("] ", 1)
+
+            messages.setdefault(sender, []).extend([content])
+
+        for key, value in messages.items():
+            self.participation[key] = round(len(value)/len(lines)*100, 2) #participação dos alunos
+
+
+    def getVocab(self, text, user):
+        stopwords = set(stopwords.words("english"))
+
+        words = set(text.lower().split())
+        meaningful_words = words - self.stopwords
+
+        new_words = meaningful_words - user.vocab
+
+        return [new_words]
 
     def getStudents(self):
         messages = {}
