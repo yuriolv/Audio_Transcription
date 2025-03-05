@@ -468,7 +468,6 @@ class SecondScreen(ctk.CTkFrame):
             for index, phrase in enumerate(student.phrases):
                 if phrase.check:
                     found = True
-                    print(f"Phrase: {phrase.content} | Checked: {phrase.check}")
                     phrase.content = phrase.content.replace(student.name, '')
                     phrase.content = phrase.content.replace(' - ', '')
                     text += f'{index + 1}) {phrase.content}\n'
