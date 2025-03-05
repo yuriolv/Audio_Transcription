@@ -8,6 +8,7 @@ class User:
         self.name = name
         self.phrases = phrases
         self.email = None
+        self.vocab = None
 
     def getEmail(self):
         self.email = get_email(self.name)
