@@ -53,15 +53,16 @@ class Transcription:
             header = parts[0]
             content = nltk.sent_tokenize(parts[1])
 
+            #coloco novas palavras ao vocabulário
             vocab = self.getVocab(content, user)
-            user.vocab.extend(vocab) #coloco novas palavras ao vocabulário
+            user.vocab.extend(vocab) 
             
             sender, time = header.strip("[]").rsplit("] ", 1)
 
             messages.setdefault(sender, []).extend([content])
-
+        #participação dos alunos
         for key, value in messages.items():
-            self.participation[key] = round(len(value)/len(lines)*100, 2) #participação dos alunos
+            self.participation[key] = round(len(value)/len(lines)*100, 2) 
 
 
     def getVocab(self, text, user):
