@@ -38,32 +38,6 @@ class Transcription:
 
         self.transcripted = messages
 
-    def getAnalysis(self, file, user):
-        with open(file, encoding='utf-8') as f:
-            text = f.read()
-        nltk.download('punkt_tab')
-        messages = {}
-
-        lines = text.strip().split("\n\n")
-        print(len(lines))
-
-        for line in lines:
-            parts = line.split("\n")
-
-            header = parts[0]
-            content = nltk.sent_tokenize(parts[1])
-
-            #coloco novas palavras ao vocabulário
-            vocab = self.getVocab(content, user)
-            user.vocab.extend(vocab) 
-            
-            sender, time = header.strip("[]").rsplit("] ", 1)
-
-            messages.setdefault(sender, []).extend([content])
-        #participação dos alunos
-        for key, value in messages.items():
-            self.participation[key] = round(len(value)/len(lines)*100, 2) 
-
 
     def getVocab(self, text, user):
         stopwords = set(stopwords.words("english"))
