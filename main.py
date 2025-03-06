@@ -8,6 +8,7 @@ from datetime import datetime
 from tkinter import PhotoImage
 import threading, time
 from PIL import Image, ImageTk
+from generatePDF import create_pdf
 
 class App(ctk.CTk):
     def __init__(self):
@@ -315,9 +316,9 @@ class ReportScreen(ctk.CTkFrame):
             if self.student_buttons:
                 self.student_buttons[0].invoke()
 
-            '''self.confirm_button.configure(
-                command=lambda: 
-            )'''
+            self.confirm_button.configure(
+                command=lambda: create_pdf("monthly_report.pdf", 'Yuri De Oliveira Magalhães')
+            )
 
             self.is_initialized = True
         except Exception as e:
