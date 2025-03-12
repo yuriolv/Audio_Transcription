@@ -1,11 +1,13 @@
 from Models.User import User
+from Database.Transcrição import create_transcricao
 from Models.Phrases import Phrases
 from pathlib import Path
 import nltk
 
 class Transcription:
-    def __init__(self, file):
+    def __init__(self, file, name):
         self.date = None
+        self.name = name
         self.file = file
         self.transcripted = None
         self.participation = {}
@@ -37,6 +39,7 @@ class Transcription:
             }
 
         self.transcripted = messages
+        create_transcricao(self.name, messages)
 
 
     def getVocab(self, text, user):

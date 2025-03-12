@@ -37,8 +37,8 @@ def getOcurrence(student):
     print(corrections)
 
     for erro in corrections:
-        if erro[0] not in errors:
-            errors.append(erro[0])
+        if erro[1] not in errors:
+            errors.append(erro)
         else:
-            repeated.append(erro[0])
+            repeated.append(erro)
     return repeated
