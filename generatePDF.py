@@ -1,9 +1,7 @@
-
 from collections import Counter
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
-from Database import Aluno, Transcrição, Correção
 from getAnalysis import getOcurrence, getParticipation
 import nltk
 
@@ -88,6 +86,10 @@ def create_pdf(file_name, student_name):
     c.setFillColor(colors.HexColor("#f1457e"))
     title_width = c.stringWidth(title, "Helvetica-Bold", 24)
     c.drawString((width - title_width) / 2, height - header_height + 25, title)
+    c.setFont("Helvetica-Bold", 14)
+    c.setFillColor(colors.HexColor("#f1457e"))
+    student_width = c.stringWidth(student_name, "Helvetica-Bold", 14)
+    c.drawString((width - student_width) / 2, height - header_height + 5, student_name)
 
     # Seções
     rect_x = 50
@@ -108,17 +110,33 @@ def create_pdf(file_name, student_name):
 
         if section == "Repeated mistakes":
             errors = getOcurrence(student_name)
-            c.setFont("Helvetica-BoldOblique", 12)
-            error_text = ", ".join(errors) if errors else "No frequent errors detected."
-            c.drawString(rect_x + 10, y_position - 40, error_text)
             c.setFont("Helvetica", 12)
-            c.drawString(rect_x + 10, y_position - 70, "In the last few weeks, you've been making some repeated mistakes!")
-            c.drawString(rect_x + 10, y_position - 90, "Don't worry, this is part of the learning process.")
-            c.drawString(rect_x + 10, y_position - 110, "In the student portal, you will soon find activities to help you overcome these challenges!")
+            print(f"list of repeated errors {errors}")
+            
+            if errors:
+                print("there are errors!")
+                y_offset = y_position - 40
+                y_offset -= 20
+                c.setFont("Helvetica-Bold", 12)
+
+                for frase, erro in errors:
+                    print(f"and these are {frase, erro}")
+                    formatted_text = f"{frase}\n➡️ {erro}"
+                    c.setFont("Helvetica", 12)
+                    
+                    if y_offset < rect_y + 20:
+                        c.drawString(rect_x + 10, y_offset, "More errors are available in the full report.")
+                        break
+
+                    c.drawString(rect_x + 10, y_offset, formatted_text)
+                    y_offset -= 20 
+            else:
+                c.drawString(rect_x + 10, y_position - 40, "No frequent errors detected.")
             
         
         if section == "Participation":
             participation = getParticipation(student_name)
+            print(f"participation: {participation}")
             if participation:
                 table(c, rect_x, rect_y, participation, rect_width, rect_height)
             else:
@@ -130,3 +148,4 @@ def create_pdf(file_name, student_name):
 
 if __name__ == "__main__":
     create_pdf("monthly_report.pdf", 'Yuri De Oliveira Magalhães')
+    print("pdf created!")
