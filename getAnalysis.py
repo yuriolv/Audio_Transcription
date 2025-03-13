@@ -32,13 +32,18 @@ def getOcurrence(student):
     errors = []
     repeated = []
 
-    corrections = Correção.get_correcoes(student_id)
-
+    corrections = Correção.get_correcoes(student_id) 
+    
     print(corrections)
 
     for erro in corrections:
-        if erro[0] not in errors:
-            errors.append(erro[0])
+        print(f"Error type: {erro[1]}")
+        if erro[1] not in errors:
+            print(f"adding {erro} to errors")
+            errors.append(erro)
         else:
-            repeated.append(erro[0])
-    return repeated
+            print(f"adding {erro} to repeated")
+            repeated.append(erro)
+    print(f"errors: {errors}")
+    print(f"repeated errors: {repeated}")
+    return repeated + errors

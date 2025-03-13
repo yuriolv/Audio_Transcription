@@ -22,9 +22,9 @@ def get_Transcription(file_name):
           for i in item.iterdir():
             path = i
 
-          transcripted = Transcription(path)
+          transcripted = Transcription(path, name)
 
           transcripted.getTranscription()
           transcripted.getStudents()
 
-          return transcripted.students
+          return transcripted

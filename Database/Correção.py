@@ -18,8 +18,8 @@ def read_correcoes():
 def get_correcoes(student_id):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT Erro FROM Correcao WHERE idAluno = ?", (student_id,))
-        return cursor.fetchall()
+        cursor.execute("SELECT Frase,Erro FROM Correcao WHERE idAluno = ?", (student_id,))
+        return cursor.fetchall()[-3:]
 
 def update_correcao(correcao_id, correcao, id_aluno, id_transcricao):
     with sqlite3.connect(db_path) as conn:
@@ -32,3 +32,5 @@ def delete_correcao(correcao_id):
         cursor = conn.cursor()
         cursor.execute("DELETE FROM Correcao WHERE Id = ?", (correcao_id,))
         conn.commit()
+
+get_correcoes(1)

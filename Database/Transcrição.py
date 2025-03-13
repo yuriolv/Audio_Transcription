@@ -3,16 +3,22 @@ import sqlite3
 
 db_path = "language_school.db"
 
-def create_transcricao(id_aula, frase):
+def create_transcricao(name, Conteudo, id_aula=None):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO Transcricao (idAula, Frase) VALUES (?, ?)", (id_aula, frase))
+        cursor.execute("INSERT INTO Transcricao (idAula, Conteudo, Titulo) VALUES (?, ?, ?)", (id_aula, Conteudo, name))
         conn.commit()
 
 def read_transcricoes():
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT Frase FROM Transcricao")
+        cursor.execute("SELECT Conteudo FROM Transcricao")
+        return cursor.fetchall()
+    
+def get_transcricao(name):
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT Id FROM Transcricao WHERE name = ?", (name))
         return cursor.fetchall()
 
 def update_transcricao(transcricao_id, id_aula, frase):

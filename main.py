@@ -8,6 +8,8 @@ from datetime import datetime
 from tkinter import PhotoImage
 import threading, time
 from PIL import Image, ImageTk
+from generatePDF import create_pdf
+import webbrowser
 
 class App(ctk.CTk):
     def __init__(self):
@@ -109,7 +111,7 @@ class FirstScreen(ctk.CTkFrame):
         
         report_button = ctk.CTkButton(
             middle_frame, text="Go to report", 
-            command=lambda: self.go_to_report_screen(), 
+            command=lambda: (create_pdf("monthly_report.pdf", 'Yuri De Oliveira Magalhães'), webbrowser.open("monthly_report.pdf")), 
             fg_color="#3C808C", text_color='#FFFFFF', 
             hover_color="#4092a0", 
             font=ctk.CTkFont(family='Inter')
@@ -315,9 +317,9 @@ class ReportScreen(ctk.CTkFrame):
             if self.student_buttons:
                 self.student_buttons[0].invoke()
 
-            '''self.confirm_button.configure(
-                command=lambda: 
-            )'''
+            self.confirm_button.configure(
+                command=lambda: create_pdf("monthly_report.pdf", 'Yuri De Oliveira Magalhães')
+            )
 
             self.is_initialized = True
         except Exception as e:
