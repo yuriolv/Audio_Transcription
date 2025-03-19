@@ -1,6 +1,7 @@
 from collections import Counter
 from Database import Aluno, Transcrição, Correção
 import nltk
+from textblob import TextBlob
 from langdetect import detect_langs
 
 def getParticipation(id_aluno):
@@ -91,5 +92,38 @@ def getLanguage(id_aluno):
                 mean.append(result['en'])
     return round((sum(mean)/len(mean)), 2)
 
-list = getLanguage(2)
+def sentimentalAnalysis(phrase):
+    blob = TextBlob(phrase)
+    sentiment_score = blob.sentiment.polarity 
+    return sentiment_score
+
+
+def getSentimental(id_aluno):
+    student = Aluno.get_name(id_aluno)[0][0]
+    texts = Transcrição.getById(id_aluno)
+    mean = []
+
+    for text in texts:
+        messages = {}
+        new_text = text[0].replace('\r', '')
+        lines = new_text.strip().split("\n\n")
+
+        for line in lines:
+            parts = line.split("\n")
+
+            header = parts[0]
+            content = parts[1]
+            
+            sender, time = header.strip("[]").rsplit("] ", 1)
+
+            messages.setdefault(sender, []).extend([content])
+            
+        for key, value in messages.items():
+            if key == student:
+                phrase = ''.join(value)
+                result = sentimentalAnalysis(phrase)
+                mean.append(result)
+    return round((sum(mean)/len(mean)), 2)
+
+list = getSentimental(2)
 print(list)
