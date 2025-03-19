@@ -15,10 +15,16 @@ def read_alunos():
         cursor.execute("SELECT * FROM Aluno")
         return cursor.fetchall()
 
-def get_student(name):
+def get_id(name):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT Id FROM Aluno WHERE Nome = ?", (name,))
+        return cursor.fetchall()
+    
+def get_name(id_aluno):
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT Nome FROM Aluno WHERE Id = ?", (id_aluno,))
         return cursor.fetchall()
 
 

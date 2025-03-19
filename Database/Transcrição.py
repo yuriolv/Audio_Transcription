@@ -15,6 +15,12 @@ def read_transcricoes():
         cursor.execute("SELECT Conteudo FROM Transcricao")
         return cursor.fetchall()
     
+def getById(id_aluno):
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT Conteudo FROM Transcricao WHERE IdsAlunos LIKE ? LIMIT 1", (f'%{id_aluno}%',))
+        return cursor.fetchall()
+    
 def get_transcricao(name):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()

@@ -1,11 +1,13 @@
 from collections import Counter
 from Database import Aluno, Transcrição, Correção
 import nltk
+from langdetect import detect_langs
 
-def getParticipation(student):
+def getParticipation(id_aluno):
         nltk.download('punkt_tab') 
         participations = []
-        texts = Transcrição.read_transcricoes()[-4:]
+        student = Aluno.get_id(id_aluno)
+        texts = Transcrição.getById(id_aluno)
         for text in texts:
             messages = {}
 
@@ -28,7 +30,7 @@ def getParticipation(student):
         return participations
 
 def getOcurrence(student):
-    student_id = Aluno.get_student(student)[0][0]
+    student_id = Aluno.get_id(student)[0][0]
     errors = []
     repeated = []
 
@@ -47,3 +49,46 @@ def getOcurrence(student):
     print(f"errors: {errors}")
     print(f"repeated errors: {repeated}")
     return repeated + errors
+
+def getPercentage(phrase):
+    detected = detect_langs(phrase)
+    result = {}
+
+    for lang in detected:
+        if lang.lang == 'pt':
+            result['pt'] = round(lang.prob * 100, 2)
+        elif lang.lang == 'en':
+            result['en'] = round(lang.prob * 100, 2)
+        else:
+            print('Text not identified')
+
+    return result
+
+def getLanguage(id_aluno):
+    student = Aluno.get_name(id_aluno)[0][0]
+    texts = Transcrição.getById(id_aluno)
+
+    for text in texts:
+        messages = {}
+
+        new_text = text[0].replace('\r', '')
+        lines = new_text.strip().split("\n\n")
+
+        for line in lines:
+            parts = line.split("\n")
+
+            header = parts[0]
+            content = parts[1]
+            
+            sender, time = header.strip("[]").rsplit("] ", 1)
+
+            messages.setdefault(sender, []).extend([content])
+            
+        for key, value in messages.items():
+            if key == student:
+                phrase = ''.join(value)
+                return getPercentage(phrase)
+    
+
+list = getLanguage(1)
+print(list)

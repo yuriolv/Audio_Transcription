@@ -1,7 +1,7 @@
 from langchain_ollama import OllamaLLM
 from Database.Correção import create_correcao
 from Database.Transcrição import get_transcricao
-from Database.Aluno import get_student
+from Database.Aluno import get_id
 import textwrap
 
 
@@ -37,7 +37,7 @@ def errorDetection(transcripted):
                 report = '\n'.join(wrapped_lines)
                 
                 phrase.content = report
-                id_aluno = get_student(user.name)[0][0]
+                id_aluno = get_id(user.name)[0][0]
                 id_transcricao = get_transcricao(transcripted.name)[0][0]
                 create_correcao(report, id_aluno, id_transcricao)
                 
