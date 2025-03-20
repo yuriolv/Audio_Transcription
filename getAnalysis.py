@@ -30,25 +30,19 @@ def getParticipation(id_aluno):
                     participations.append(round(len(value)/len(lines)*100, 2))
         return participations
 
-def getOcurrence(student):
-    student_id = Aluno.get_id(student)[0][0]
+def getOcurrence(id_aluno):
     errors = []
     repeated = []
 
-    corrections = Correção.get_correcoes(student_id) 
+    corrections = Correção.get_correcoes(id_aluno) 
     
     print(corrections)
 
     for erro in corrections:
-        print(f"Error type: {erro[1]}")
         if erro[1] not in errors:
-            print(f"adding {erro} to errors")
             errors.append(erro)
         else:
-            print(f"adding {erro} to repeated")
             repeated.append(erro)
-    print(f"errors: {errors}")
-    print(f"repeated errors: {repeated}")
     return repeated + errors
 
 def getPercentage(phrase):
@@ -127,3 +121,39 @@ def getSentimental(id_aluno):
 
 list = getSentimental(2)
 print(list)
+
+def getPhraseLength(id_aluno):
+    student = Aluno.get_name(id_aluno)[0][0]
+    if not student:  
+        raise ValueError("Student ID is required")
+    texts = Transcrição.getById(id_aluno)
+    phrase_length = []
+    print(f"student: {student}")
+    average_length = 0
+    
+    for text in texts:
+        messages = {}
+        new_text = text[0].replace('\r', '')
+        lines = new_text.strip().split("\n\n")
+        for line in lines:
+            parts = line.split("\n")
+            header = parts[0]
+            content = parts[1]
+            
+            sender, _ = header.strip("[]").rsplit("] ", 1)
+
+            messages.setdefault(sender, []).extend([content])
+        
+        for key, value in messages.items():
+            if key == student:
+                phrase = ' '.join(value)
+                words = phrase.split()
+                phrase_length.append(len(words))
+                
+    print(phrase_length)
+    if phrase_length:
+        average_length = round(sum(phrase_length) / len(phrase_length), 2)
+    else:
+        print("No phrases found for the student.")
+        
+    return average_length

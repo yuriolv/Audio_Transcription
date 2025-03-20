@@ -1,8 +1,14 @@
+import numpy as np
+import os
+import matplotlib.pyplot as plt
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
 from collections import Counter
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
-from getAnalysis import getOcurrence, getParticipation
+from getAnalysis import getOcurrence, getParticipation, getLanguage, getPhraseLength, getSentimental
+from Database import Transcrição
 import nltk
 
 # Régua para auxiliar na criação do PDF
@@ -22,6 +28,64 @@ def drawMyRuler(canvas_obj):
     canvas_obj.drawString(100, 300, 'y300')
     canvas_obj.drawString(100, 200, 'y200')
     canvas_obj.drawString(100, 100, 'y100')
+
+# Criação do gráfico 
+def create_speedometer(percentage, output_path = "Assets/Images/speedometer.png"):
+    print("Creating speedometer...")
+    fig, ax = plt.subplots(figsize=(4, 2), subplot_kw={'projection': 'polar'})
+    
+    colors = ['#882577', '#631974', '#440c74'] # Baixo, médio de alto (em relação ao uso do inglês)
+    ranges = [33, 66, 100]
+    
+    # Converte a porcentagem para radiano
+    rad = np.deg2rad(180 * (percentage / 100))
+    
+    # Background
+    for i, (color, range) in enumerate(zip(colors, ranges)):
+        if i > 0:
+            left_angle = np.deg2rad(180 * (ranges[i - 1] / 100))
+        else:
+            left_angle = 0  
+
+    width = np.deg2rad(180 * (range / 100))
+
+    ax.barh(
+        y=1, 
+        width=width, 
+        left=left_angle, 
+        color="#FF5733", 
+        height=0.5, 
+        edgecolor="black"
+    )
+    
+    # Agulha
+    ax.plot([0, rad], [0, 1], color = 'black', linewidth=2, marker='o')
+    
+    ax.set_yticklabels([])
+    ax.set_xticklabels([])
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.spines['polar'].set_visible(False)
+    
+    plt.savefig(output_path, transparent=True, bbox_inches='tight', pad_inches=0)
+    print(f"Speedometer saved at: {output_path}")
+    plt.close()
+    
+
+def add_to_pdf(pdf_path, percentage):
+    c = canvas.Canvas(pdf_path)
+    
+    # teste
+    c.setFont("Helvetica", 12)
+    c.drawString(100, 100, "test string!!!")
+    
+    c.setFillColorRGB(0, 0, 1)  
+    c.rect(100, 650, 200, 100, fill=1)
+    
+    speedometer_path = "Assets/Images/speedometer.png"
+    c.drawImage(speedometer_path, 100, 550, width=200, height=100)
+    
+    c.save()
 
 # Tabela de participação 
 def table(c, rect_x, rect_y, student_participation, rect_width, rect_height):
@@ -63,10 +127,10 @@ def table(c, rect_x, rect_y, student_participation, rect_width, rect_height):
             participation_message = "Your participation has remained steady. Keep it up, consistency is key!"
         c.drawString(rect_x + 10, table_y - 40, participation_message)
 
-def create_pdf(file_name, student_name):
+def create_pdf(file_name, student_id):
     c = canvas.Canvas(file_name, pagesize=A4)
     width, height = A4
-
+    
     # Background
     c.setFillColor(colors.HexColor("#e8e2ee"))
     c.rect(0, 0, width, height, fill=True)
@@ -88,15 +152,15 @@ def create_pdf(file_name, student_name):
     c.drawString((width - title_width) / 2, height - header_height + 25, title)
     c.setFont("Helvetica-Bold", 14)
     c.setFillColor(colors.HexColor("#f1457e"))
-    student_width = c.stringWidth(student_name, "Helvetica-Bold", 14)
-    c.drawString((width - student_width) / 2, height - header_height + 5, student_name)
+    student_width = c.stringWidth(student_id, "Helvetica-Bold", 14)
+    c.drawString((width - student_width) / 2, height - header_height + 5, student_id)
 
     # Seções
     rect_x = 50
     rect_y = 100
     rect_width = width - 100
-    rect_height = (height - 350) / 2
-    section_titles = ["Repeated mistakes", "Participation"]
+    rect_height = (height - 250) / 4
+    section_titles = ["Repeated mistakes", "Participation", "Your main language", "How much are you speaking?"]
 
     for i, section in enumerate(section_titles):
         y_position = height - 150 - (i * rect_height)
@@ -109,19 +173,16 @@ def create_pdf(file_name, student_name):
         c.drawString(rect_x + 10, y_position - 20, section)
 
         if section == "Repeated mistakes":
-            errors = getOcurrence(student_name)
+            errors = getOcurrence(student_id)
             c.setFont("Helvetica", 12)
-            print(f"list of repeated errors {errors}")
             
             if errors:
-                print("there are errors!")
                 y_offset = y_position - 40
                 y_offset -= 20
                 c.setFont("Helvetica-Bold", 12)
 
                 for frase, erro in errors:
-                    print(f"and these are {frase, erro}")
-                    formatted_text = f"{frase}\n➡️ {erro}"
+                    formatted_text = f"{frase} → {erro}"
                     c.setFont("Helvetica", 12)
                     
                     if y_offset < rect_y + 20:
@@ -135,17 +196,46 @@ def create_pdf(file_name, student_name):
             
         
         if section == "Participation":
-            participation = getParticipation(student_name)
-            print(f"participation: {participation}")
+            participation = getParticipation(student_id)
             if participation:
                 table(c, rect_x, rect_y, participation, rect_width, rect_height)
             else:
                 c.setFont("Helvetica", 12)
                 c.drawString(rect_x + 10, y_position - 40, "No participation data available.")
+        
+        
+        if section == "Your main language":
+            eng_percentage = getLanguage(student_id)
+            pt_percentage = 100 - eng_percentage
+            if eng_percentage > pt_percentage:
+                message = ("You speak primarily in English! Keep it up, speaking in your target language is essential for your learning journey!")
 
+            else:
+                message = "You speak primarily in Portuguese. Try to incorporate more English into your conversations for better learning!"
+            c.setFont("Helvetica", 12)
+            y_position = 360
+            c.drawString(rect_x + 10, y_position-20, f"This is your english percentage: {eng_percentage}")
+            c.drawString(rect_x + 10, y_position-40, f"This is your portuguese percentage: {pt_percentage}")
+            lines = message.split(", ")
+            for line in lines:
+                c.drawString(rect_x + 10, y_position-60, line)
+                y_position -= 20
+            
+        
+        if section == "How much are you speaking?":
+            average_length = getPhraseLength(student_id)
+            c.setFont("Helvetica", 12)
+            message_one = f"This is your average phrase length: {average_length}"
+            c.drawString(rect_x + 10, 200, message_one)
+        
+            sentiment = getSentimental(student_id)
+            c.setFont("Helvetica", 12)
+            message_two = f"this is how you feel {sentiment}"
+            c.drawString(rect_x + 10, 180, message_two)
+            
     #drawMyRuler(c)
     c.save()
 
 if __name__ == "__main__":
-    create_pdf("monthly_report.pdf", 'Yuri De Oliveira Magalhães')
     print("pdf created!")
+    create_pdf("monthly_report.pdf", '1')
