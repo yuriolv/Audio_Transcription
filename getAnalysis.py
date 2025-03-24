@@ -124,11 +124,8 @@ print(list)
 
 def getPhraseLength(id_aluno):
     student = Aluno.get_name(id_aluno)[0][0]
-    if not student:  
-        raise ValueError("Student ID is required")
     texts = Transcrição.getById(id_aluno)
     phrase_length = []
-    print(f"student: {student}")
     average_length = 0
     
     for text in texts:

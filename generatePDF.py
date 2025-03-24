@@ -1,14 +1,11 @@
 import numpy as np
-import os
 import matplotlib.pyplot as plt
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from collections import Counter
 from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
 from reportlab.lib import colors
 from getAnalysis import getOcurrence, getParticipation, getLanguage, getPhraseLength, getSentimental
-from Database import Transcrição
 import nltk
 
 # Régua para auxiliar na criação do PDF
@@ -37,26 +34,22 @@ def create_speedometer(percentage, output_path = "Assets/Images/speedometer.png"
     colors = ['#882577', '#631974', '#440c74'] # Baixo, médio de alto (em relação ao uso do inglês)
     ranges = [33, 66, 100]
     
+    fig.patch.set_facecolor("#e8e2ee")
+    ax.set_facecolor("#e8e2ee")
+    
     # Converte a porcentagem para radiano
     rad = np.deg2rad(180 * (percentage / 100))
     
+    ax.set_theta_zero_location("W")  # Faz o velocímetro ficar na horizontal
+    ax.set_theta_direction(-1)
+    
     # Background
-    for i, (color, range) in enumerate(zip(colors, ranges)):
-        if i > 0:
-            left_angle = np.deg2rad(180 * (ranges[i - 1] / 100))
-        else:
-            left_angle = 0  
-
-    width = np.deg2rad(180 * (range / 100))
-
-    ax.barh(
-        y=1, 
-        width=width, 
-        left=left_angle, 
-        color="#FF5733", 
-        height=0.5, 
-        edgecolor="black"
-    )
+    start_angle = 0
+    for i in range(len(ranges)):
+        end_angle = np.deg2rad(180 * (ranges[i] / 100))
+        ax.barh(y=1, width=end_angle - start_angle, left=start_angle, 
+                color=colors[i], height=0.5, edgecolor="black")
+        start_angle = end_angle  # Atualiza para a próxima seção
     
     # Agulha
     ax.plot([0, rad], [0, 1], color = 'black', linewidth=2, marker='o')
@@ -67,25 +60,14 @@ def create_speedometer(percentage, output_path = "Assets/Images/speedometer.png"
     ax.set_yticks([])
     ax.spines['polar'].set_visible(False)
     
-    plt.savefig(output_path, transparent=True, bbox_inches='tight', pad_inches=0)
+    fig.patch.set_facecolor("#e8e2ee")
+    plt.savefig(output_path, bbox_inches='tight', pad_inches=0)
     print(f"Speedometer saved at: {output_path}")
     plt.close()
-    
 
-def add_to_pdf(pdf_path, percentage):
-    c = canvas.Canvas(pdf_path)
-    
-    # teste
-    c.setFont("Helvetica", 12)
-    c.drawString(100, 100, "test string!!!")
-    
-    c.setFillColorRGB(0, 0, 1)  
-    c.rect(100, 650, 200, 100, fill=1)
-    
+def add_to_pdf(c, percentage):
     speedometer_path = "Assets/Images/speedometer.png"
-    c.drawImage(speedometer_path, 100, 550, width=200, height=100)
-    
-    c.save()
+    c.drawImage(speedometer_path, 190, 212, width=200, height=100)
 
 # Tabela de participação 
 def table(c, rect_x, rect_y, student_participation, rect_width, rect_height):
@@ -208,32 +190,38 @@ def create_pdf(file_name, student_id):
             eng_percentage = getLanguage(student_id)
             pt_percentage = 100 - eng_percentage
             if eng_percentage > pt_percentage:
-                message = ("You speak primarily in English! Keep it up, speaking in your target language is essential for your learning journey!")
+                message = "You speak primarily in English! Keep it up, speaking in English is essential for your learning journey!"
 
             else:
                 message = "You speak primarily in Portuguese. Try to incorporate more English into your conversations for better learning!"
             c.setFont("Helvetica", 12)
-            y_position = 360
-            c.drawString(rect_x + 10, y_position-20, f"This is your english percentage: {eng_percentage}")
-            c.drawString(rect_x + 10, y_position-40, f"This is your portuguese percentage: {pt_percentage}")
+            y_position = 400
             lines = message.split(", ")
             for line in lines:
                 c.drawString(rect_x + 10, y_position-60, line)
                 y_position -= 20
             
+            create_speedometer(percentage=eng_percentage)
+            add_to_pdf(c, percentage=eng_percentage)
         
         if section == "How much are you speaking?":
-            average_length = getPhraseLength(student_id)
+            average_length = 23 #getPhraseLength(student_id)
             c.setFont("Helvetica", 12)
-            message_one = f"This is your average phrase length: {average_length}"
-            c.drawString(rect_x + 10, 200, message_one)
-        
-            sentiment = getSentimental(student_id)
-            c.setFont("Helvetica", 12)
-            message_two = f"this is how you feel {sentiment}"
-            c.drawString(rect_x + 10, 180, message_two)
+            message = f"This is your average phrase length: {average_length}"
+            c.drawString(rect_x + 10, 200, message)
+            if average_length < 30:
+                advice = "You didn't speak much. Try to speak more next time!"
+            elif average_length in range(31, 51):
+                advice = "Good start. Stay strong and keep learning!"
+            else:
+                advice = "You spoke a lot this time!! Keep it up, long sentences will help you reach fluency faster."
+            y_position = 200
+            lines = advice.split("! ")
+            for line in lines:
+                c.drawString(rect_x + 10, y_position-20, line)
+                y_position -= 20
             
-    #drawMyRuler(c)
+    drawMyRuler(c)
     c.save()
 
 if __name__ == "__main__":
