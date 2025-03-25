@@ -111,7 +111,7 @@ class FirstScreen(ctk.CTkFrame):
         
         report_button = ctk.CTkButton(
             middle_frame, text="Go to report", 
-            command=lambda: (create_pdf("monthly_report.pdf", 'Yuri De Oliveira Magalhães'), webbrowser.open("monthly_report.pdf")), 
+            command=lambda: (create_pdf("monthly_report.pdf", 1), webbrowser.open("monthly_report.pdf")), 
             fg_color="#3C808C", text_color='#FFFFFF', 
             hover_color="#4092a0", 
             font=ctk.CTkFont(family='Inter')

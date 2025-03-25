@@ -6,6 +6,7 @@ from collections import Counter
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from getAnalysis import getOcurrence, getParticipation, getLanguage, getPhraseLength, getSentimental
+from Database import Aluno
 import nltk
 
 # Régua para auxiliar na criação do PDF
@@ -134,8 +135,10 @@ def create_pdf(file_name, student_id):
     c.drawString((width - title_width) / 2, height - header_height + 25, title)
     c.setFont("Helvetica-Bold", 14)
     c.setFillColor(colors.HexColor("#f1457e"))
-    student_width = c.stringWidth(student_id, "Helvetica-Bold", 14)
-    c.drawString((width - student_width) / 2, height - header_height + 5, student_id)
+
+    name = Aluno.get_name(student_id)[0][0]
+    student_width = c.stringWidth(name, "Helvetica-Bold", 14)
+    c.drawString((width - student_width) / 2, height - header_height + 5, name)
 
     # Seções
     rect_x = 50
@@ -226,4 +229,4 @@ def create_pdf(file_name, student_id):
 
 if __name__ == "__main__":
     print("pdf created!")
-    create_pdf("monthly_report.pdf", '1')
+    create_pdf("monthly_report.pdf", 1)

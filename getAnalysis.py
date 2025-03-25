@@ -36,7 +36,6 @@ def getOcurrence(id_aluno):
 
     corrections = Correção.get_correcoes(id_aluno) 
     
-    print(corrections)
 
     for erro in corrections:
         if erro[1] not in errors:
@@ -119,9 +118,6 @@ def getSentimental(id_aluno):
                 mean.append(result)
     return round((sum(mean)/len(mean)), 2)
 
-list = getSentimental(2)
-print(list)
-
 def getPhraseLength(id_aluno):
     student = Aluno.get_name(id_aluno)[0][0]
     texts = Transcrição.getById(id_aluno)
@@ -147,7 +143,6 @@ def getPhraseLength(id_aluno):
                 words = phrase.split()
                 phrase_length.append(len(words))
                 
-    print(phrase_length)
     if phrase_length:
         average_length = round(sum(phrase_length) / len(phrase_length), 2)
     else:
