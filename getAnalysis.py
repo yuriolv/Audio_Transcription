@@ -1,5 +1,5 @@
 from collections import Counter
-from Database import Aluno, Transcrição, Correção
+from Database import Corrections, Student, Transcription
 import nltk
 from textblob import TextBlob
 from langdetect import detect_langs
@@ -7,8 +7,8 @@ from langdetect import detect_langs
 def getParticipation(id_aluno):
         nltk.download('punkt_tab') 
         participations = []
-        student = Aluno.get_id(id_aluno)
-        texts = Transcrição.getById(id_aluno)
+        student = Student.get_id(id_aluno)
+        texts = Transcription.get_by_id(id_aluno)
         for text in texts:
             messages = {}
 
@@ -34,8 +34,10 @@ def getOcurrence(id_aluno):
     errors = []
     repeated = []
 
-    corrections = Correção.get_correcoes(id_aluno) 
+    corrections = Corrections.get_corrections(id_aluno) 
     
+    if len(corrections) == 0:
+        return
 
     for erro in corrections:
         if erro[1] not in errors:
@@ -59,9 +61,12 @@ def getPercentage(phrase):
     return result
 
 def getLanguage(id_aluno):
-    student = Aluno.get_name(id_aluno)[0][0]
-    texts = Transcrição.getById(id_aluno)
+    student = Student.get_name(id_aluno)[0][0]
+    texts = Transcription.get_by_id(id_aluno)
     mean = []
+
+    if len(texts) == 0 or student == None:
+        return
 
     for text in texts:
         messages = {}
@@ -85,16 +90,19 @@ def getLanguage(id_aluno):
                 mean.append(result['en'])
     return round((sum(mean)/len(mean)), 2)
 
-def sentimentalAnalysis(phrase):
+def sentimentalScore(phrase):
     blob = TextBlob(phrase)
     sentiment_score = blob.sentiment.polarity 
     return sentiment_score
 
 
 def getSentimental(id_aluno):
-    student = Aluno.get_name(id_aluno)[0][0]
-    texts = Transcrição.getById(id_aluno)
+    student = Student.get_name(id_aluno)[0][0]
+    texts = Transcription.get_by_id(id_aluno)
     mean = []
+
+    if len(texts) == 0 or student == None:
+        return
 
     for text in texts:
         messages = {}
@@ -114,13 +122,14 @@ def getSentimental(id_aluno):
         for key, value in messages.items():
             if key == student:
                 phrase = ''.join(value)
-                result = sentimentalAnalysis(phrase)
+                result = sentimentalScore(phrase)
                 mean.append(result)
     return round((sum(mean)/len(mean)), 2)
 
 def getPhraseLength(id_aluno):
-    student = Aluno.get_name(id_aluno)[0][0]
-    texts = Transcrição.getById(id_aluno)
+    student = Student.get_name(id_aluno)[0][0]
+    texts = Transcription.get_by_id(id_aluno)
+
     phrase_length = []
     average_length = 0
     

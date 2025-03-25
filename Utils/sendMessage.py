@@ -27,10 +27,10 @@ def send_message(message, contact_id):
     response = requests.post(ZOOM_API_URL, json=json, headers=headers)
 
     if response.status_code == 201:
-        print("Mensagem enviada com sucesso!")
+        print("Message send successfully")
         return True
     else:
-        print(f"Erro ao enviar a mensagem: {response.status_code}")
+        print(f"Error to send message: {response.status_code}")
         print(response.json())
         return False
 

@@ -217,8 +217,8 @@ class LoadingScreen(ctk.CTkFrame):
         def update(frame_idx=0):
             frame = frames[frame_idx]
             label.configure(image=frame)
-            frame_idx = (frame_idx + 1) % len(frames)  # Loop circular das frames
-            self.controller.after(50, update, frame_idx)  # Atualiza a cada 100ms
+            frame_idx = (frame_idx + 1) % len(frames) 
+            self.controller.after(50, update, frame_idx)  
 
         update()
 
@@ -232,11 +232,11 @@ class LoadingScreen(ctk.CTkFrame):
             frames = []
             while True:
                 try:
-                    gif.seek(len(frames))  # Vai para o próximo frame
-                    frame = gif.copy()  # Faz uma cópia do frame atual como PIL.Image.Image
-                    frames.append(ctk.CTkImage(light_image=frame, size=(40, 40)))  # Define o tamanho da imagem
+                    gif.seek(len(frames))
+                    frame = gif.copy() 
+                    frames.append(ctk.CTkImage(light_image=frame, size=(40, 40))) 
                 except EOFError:
-                    break  # Sai do loop ao atingir o final do GIF
+                    break  
             return frames
 
 class ReportScreen(ctk.CTkFrame):
@@ -469,7 +469,6 @@ class SecondScreen(ctk.CTkFrame):
         self.edit_window.lift()
         self.edit_window.focus_force()
         
-        # Display da frase para edição
         self.textbox = ctk.CTkTextbox(self.edit_window, width=400, height=150)  
         self.textbox.pack(side="top", padx=15, pady=10, expand=True)
         self.textbox.insert("0.0", phrase.content)
@@ -487,12 +486,14 @@ class SecondScreen(ctk.CTkFrame):
         self.edit_window.after(201, lambda: self.edit_window.iconbitmap("Assets/Images/image15.ico"))
         
     def save_changes(self, phrase):
-        new_text = self.textbox.get("1.0", "end-1c")  # Edita o texto
+        new_text = self.textbox.get("1.0", "end-1c")  
         print(f"Novo texto : {new_text}")
+
         if phrase:
-            phrase.content = new_text  # Atualiza a frase
+            phrase.content = new_text 
             print(f"Novo texto : {new_text}")
-            self.show_student_phrases(self.current_student)  # Atualiza a tela com a frase editada
+            self.show_student_phrases(self.current_student)  
+
         self.edit_window.destroy()      
         
 
@@ -555,6 +556,7 @@ class SecondScreen(ctk.CTkFrame):
     def checkbox_changed(self, phrase):
         if hasattr(phrase, 'check'):
             phrase.check = not phrase.check
+
         if phrase.check:
             self.select_phrase(phrase)
         else:
@@ -562,7 +564,7 @@ class SecondScreen(ctk.CTkFrame):
         
     def show_confirmation(self, success):
         self.confirmation_window = ctk.CTkToplevel(self)
-        self.confirmation_window.iconbitmap("Assets/Images/image15.ico")  # Definido logo após criar a janela
+        self.confirmation_window.iconbitmap("Assets/Images/image15.ico")  
         self.confirmation_window.title("Message Status")
 
         window_width = 300
@@ -574,13 +576,11 @@ class SecondScreen(ctk.CTkFrame):
         y_offset = (screen_height - window_height) // 2
         self.confirmation_window.geometry(f"{window_width}x{window_height}+{x_offset}+{y_offset}")
 
-        # Configurações adicionais para exibir no topo
         self.confirmation_window.transient(self)
         self.confirmation_window.grab_set()
         self.confirmation_window.lift()
         self.confirmation_window.focus_force()
 
-        # Mensagem de confirmação
         message = "Message sent successfully!" if success else "Failed to send the message!"
         label = ctk.CTkLabel(self.confirmation_window, text=message, font=ctk.CTkFont(family='Inter', size=14))
         label.pack(pady=20)
@@ -594,7 +594,6 @@ class SecondScreen(ctk.CTkFrame):
         )
         ok_button.pack()
 
-        # Garante que o ícone é reconfigurado após qualquer sobrescrição
         self.confirmation_window.after(201, lambda: self.confirmation_window.iconbitmap("Assets/Images/image15.ico"))
 
     
@@ -602,6 +601,7 @@ class SecondScreen(ctk.CTkFrame):
         for student in students:
             found = False
             text = 'Errors detected during the lesson:\n'
+            
             for index, phrase in enumerate(student.phrases):
                 if phrase.check:
                     found = True

@@ -6,7 +6,7 @@ from collections import Counter
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from getAnalysis import getOcurrence, getParticipation, getLanguage, getPhraseLength, getSentimental
-from Database import Aluno
+from Database import Student
 import nltk
 
 # Régua para auxiliar na criação do PDF
@@ -26,33 +26,30 @@ def drawMyRuler(canvas_obj):
     canvas_obj.drawString(100, 300, 'y300')
     canvas_obj.drawString(100, 200, 'y200')
     canvas_obj.drawString(100, 100, 'y100')
-
-# Criação do gráfico 
+ 
 def create_speedometer(percentage, output_path = "Assets/Images/speedometer.png"):
     print("Creating speedometer...")
     fig, ax = plt.subplots(figsize=(4, 2), subplot_kw={'projection': 'polar'})
     
-    colors = ['#882577', '#631974', '#440c74'] # Baixo, médio de alto (em relação ao uso do inglês)
+    colors = ['#882577', '#631974', '#440c74'] 
     ranges = [33, 66, 100]
     
     fig.patch.set_facecolor("#e8e2ee")
     ax.set_facecolor("#e8e2ee")
     
-    # Converte a porcentagem para radiano
     rad = np.deg2rad(180 * (percentage / 100))
     
-    ax.set_theta_zero_location("W")  # Faz o velocímetro ficar na horizontal
+    ax.set_theta_zero_location("W")  
     ax.set_theta_direction(-1)
     
-    # Background
     start_angle = 0
     for i in range(len(ranges)):
         end_angle = np.deg2rad(180 * (ranges[i] / 100))
         ax.barh(y=1, width=end_angle - start_angle, left=start_angle, 
                 color=colors[i], height=0.5, edgecolor="black")
-        start_angle = end_angle  # Atualiza para a próxima seção
+        start_angle = end_angle  
     
-    # Agulha
+    
     ax.plot([0, rad], [0, 1], color = 'black', linewidth=2, marker='o')
     
     ax.set_yticklabels([])
@@ -70,7 +67,7 @@ def add_to_pdf(c, percentage):
     speedometer_path = "Assets/Images/speedometer.png"
     c.drawImage(speedometer_path, 190, 212, width=200, height=100)
 
-# Tabela de participação 
+
 def table(c, rect_x, rect_y, student_participation, rect_width, rect_height):
     bar_width = 30
     bar_gap = 10
@@ -80,7 +77,6 @@ def table(c, rect_x, rect_y, student_participation, rect_width, rect_height):
     table_x = rect_x + (rect_width - table_width) / 2
     table_y = 260
 
-    # Barras de participação
     for i, participation in enumerate(student_participation):
         bar_height = max_height * (participation / 100)
         bar_x = table_x + (i * (bar_width + bar_gap))
@@ -92,33 +88,31 @@ def table(c, rect_x, rect_y, student_participation, rect_width, rect_height):
         c.setFont("Helvetica", 10)
         c.drawString(bar_x + (bar_width / 2) - 13, number_y, f"{participation:.1f}%")  
     
-    # Média de participação
     c.setFont("Helvetica", 12)
     c.setFillColor(colors.black)
     avg_participation = sum(student_participation) / len(student_participation)
     c.drawString(table_x + table_width + 20, table_y - 15, f"Avg: {avg_participation:.1f}%")
     
-    # Comparação de participação
     if len(student_participation) > 1:
         last_participation = student_participation[-1]
         prev_participation = student_participation[-2]
+
         if last_participation > prev_participation:
             participation_message = "Your participation has increased compared to previous weeks. Keep it up!"
         elif last_participation < prev_participation:
             participation_message = "You participated a bit less this time. Try to engage more during classes!"
         else:
             participation_message = "Your participation has remained steady. Keep it up, consistency is key!"
+
         c.drawString(rect_x + 10, table_y - 40, participation_message)
 
 def create_pdf(file_name, student_id):
     c = canvas.Canvas(file_name, pagesize=A4)
     width, height = A4
     
-    # Background
     c.setFillColor(colors.HexColor("#e8e2ee"))
     c.rect(0, 0, width, height, fill=True)
 
-    # Header
     header_height = 80
     c.setFillColor(colors.HexColor("#400e72"))
     c.rect(0, height - header_height, width, header_height, fill=True)
@@ -126,6 +120,7 @@ def create_pdf(file_name, student_id):
     logo_path = "Assets/Images/geoenglish.PNG"
     logo_width = 60
     logo_height = 60
+
     c.drawImage(logo_path, 20, height - logo_height - 10, width=logo_width, height=logo_height, preserveAspectRatio=True, mask='auto')
 
     title = 'MONTHLY REPORT' 
@@ -136,11 +131,10 @@ def create_pdf(file_name, student_id):
     c.setFont("Helvetica-Bold", 14)
     c.setFillColor(colors.HexColor("#f1457e"))
 
-    name = Aluno.get_name(student_id)[0][0]
+    name = Student.get_name(student_id)[0][0]
     student_width = c.stringWidth(name, "Helvetica-Bold", 14)
     c.drawString((width - student_width) / 2, height - header_height + 5, name)
 
-    # Seções
     rect_x = 50
     rect_y = 100
     rect_width = width - 100
@@ -152,7 +146,6 @@ def create_pdf(file_name, student_id):
         c.setFillColor(colors.HexColor("#e8e2ee"))
         c.rect(rect_x, y_position, rect_width, -rect_height, fill=True, stroke=True)
 
-        # Título das seções
         c.setFillColor(colors.black)
         c.setFont("Helvetica-Bold", 14)
         c.drawString(rect_x + 10, y_position - 20, section)
@@ -208,16 +201,20 @@ def create_pdf(file_name, student_id):
             add_to_pdf(c, percentage=eng_percentage)
         
         if section == "How much are you speaking?":
-            average_length = 23 #getPhraseLength(student_id)
+            average_length = 23 
             c.setFont("Helvetica", 12)
             message = f"This is your average phrase length: {average_length}"
             c.drawString(rect_x + 10, 200, message)
+
+
             if average_length < 30:
                 advice = "You didn't speak much. Try to speak more next time!"
             elif average_length in range(31, 51):
                 advice = "Good start. Stay strong and keep learning!"
             else:
                 advice = "You spoke a lot this time!! Keep it up, long sentences will help you reach fluency faster."
+
+
             y_position = 200
             lines = advice.split("! ")
             for line in lines:
