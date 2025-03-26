@@ -39,12 +39,12 @@ class App(ctk.CTk):
         self.frames = {}
         self.shared_data = None
 
-        for F in (TeacherHome, ClassReport, LoadingScreen, ReportScreen):
+        for F in (LoginScreen, StudentHome, TeacherHome, ClassReport, LoadingScreen, ReportScreen):
             frame = F(parent=self, controller=self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
-        self.show_frame(TeacherHome)
+        self.show_frame(LoginScreen)
 
     def show_frame(self, tela):
         print(f"Switching to: {tela}")
@@ -53,6 +53,170 @@ class App(ctk.CTk):
             frame.initialize()
         frame.tkraise()
 
+class LoginScreen(ctk.CTkFrame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        self.controller = controller
+        self.selected = [None]
+        self.configure(fg_color="#FFFFFF")
+
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=2)
+
+        title = ctk.CTkLabel(self, text_color='#000000', text='Welcome to LauraFix! Please login into your account.',font=ctk.CTkFont(family='Inter',size=18))
+        title.grid(column=1, row=0, sticky='s')
+        
+        image = Image.open("Assets/Images/image5.png")  
+        logo = ctk.CTkImage(image, size=(160,95))
+
+        logo_label = ctk.CTkLabel(self, image=logo, text="", fg_color="#3C808C")
+        logo_label.grid(column=0, row=0,rowspan=3,sticky='nsew')
+
+        middle_frame = ctk.CTkFrame(self, fg_color='transparent')
+        middle_frame.grid(column=1, row=1)
+
+        middle_frame.grid_rowconfigure(0, weight=1)
+        middle_frame.grid_columnconfigure(0, weight=1)
+        middle_frame.grid_columnconfigure(1, weight=1)
+        
+        teacher_button = ctk.CTkButton(
+            middle_frame, text="Teacher", 
+            command=lambda: self.go_to_teacher_screen(), 
+            fg_color="#3C808C", text_color='#FFFFFF', 
+            hover_color="#4092a0", 
+            font=ctk.CTkFont(family='Inter')
+            )
+            
+        teacher_button.grid(column=1, row=0, padx=10)
+        
+        student_button = ctk.CTkButton(
+            middle_frame, text="Student", 
+            command=lambda: self.go_to_student_screen(), 
+            fg_color="#3C808C", text_color='#FFFFFF', 
+            hover_color="#4092a0", 
+            font=ctk.CTkFont(family='Inter')
+            )
+        
+        student_button.grid(column=2, row=0, padx=10)
+
+    def load_student_screen(self):
+        print("Loading student screen...")
+        self.controller.show_frame (StudentHome)
+        
+    def load_teacher_screen(self):
+        print("Loading first screen...")
+        self.controller.show_frame(TeacherHome)
+        
+    def select_option(self, option):
+        self.error_label.configure(text="")  
+        self.selected[0] = option
+    
+    def go_to_teacher_screen(self):
+        file_name = self.selected[0]
+        self.controller.shared_data = file_name
+            
+        procces_thread = threading.Thread(target=self.load_teacher_screen)
+        procces_thread.start()
+        self.controller.show_frame(LoadingScreen)
+   
+    def go_to_student_screen(self):
+        file_name = self.selected[0]
+        self.controller.shared_data = file_name
+    
+        procces_thread = threading.Thread(target=self.load_student_screen)
+        procces_thread.start()
+        self.controller.show_frame(LoadingScreen)
+
+class StudentHome(ctk.CTkFrame):
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        self.controller = controller
+        self.configure(fg_color="#FFFFFF")
+
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=4)
+
+        # Sidebar
+        self.sidebar_frame = ctk.CTkFrame(self, fg_color="#3C808C", corner_radius=0)
+        self.sidebar_frame.grid(row=0, column=0, sticky='nswe')
+        self.sidebar_frame.grid_propagate(False)
+
+        image = Image.open("Assets/Images/image5.png")  
+        logo = ctk.CTkImage(image, size=(120, 70))
+        logo_label = ctk.CTkLabel(self.sidebar_frame, text='', image=logo)
+        logo_label.pack(anchor='center', pady=(50,0))
+
+        self.chatbot_button = ctk.CTkButton(
+            self.sidebar_frame, text="Chatbot", command=self.show_chatbot, fg_color="#1a5c68", hover_color='#4092a0'
+        )
+        self.chatbot_button.pack(fill="x", padx=10, pady=5)
+
+        self.report_button = ctk.CTkButton(
+            self.sidebar_frame, text="Report", command=self.show_report, fg_color="#1a5c68", hover_color='#4092a0'
+        )
+        self.report_button.pack(fill="x", padx=10, pady=5)
+
+        self.content_frame = ctk.CTkFrame(self, corner_radius=0)
+        self.content_frame.grid(row=0, column=1, sticky="nswe")
+
+        self.chatbot_page = self.create_chatbot_page()
+        self.report_page = self.create_report_page()
+
+        self.show_chatbot()
+        
+    def send_message(self):
+        message = self.chat_entry.get()
+        if message:
+            self.chat_history.configure(text=self.chat_history.cget("text") + "\nYou: " + message)
+            self.chat_entry.delete(0, 'end')
+            
+    def create_chatbot_page(self):
+        frame = ctk.CTkFrame(self.content_frame, fg_color="white")
+
+        title = ctk.CTkLabel(frame, text='Chat with AI', font=ctk.CTkFont('Inter', 18, 'bold'))
+        title.pack(anchor='center', pady=(20,0))
+
+        self.chat_frame = ctk.CTkScrollableFrame(frame, height=300, fg_color="grey90")
+        self.chat_frame.pack(fill="both", pady=(10,5), padx=20)
+
+        self.chat_history = ctk.CTkLabel(self.chat_frame, text='', font=ctk.CTkFont('Inter', 14), justify="left", wraplength=400)
+        self.chat_history.pack(anchor="w", padx=10, pady=10)
+
+        entry_frame = ctk.CTkFrame(frame, fg_color='transparent')
+        entry_frame.pack(fill="x", padx=20, pady=(5,10))
+
+        self.chat_entry = ctk.CTkEntry(entry_frame, placeholder_text="Type a message...", width=300)
+        self.chat_entry.pack(side="left", fill="x", expand=True, padx=(0,10))
+
+        self.send_button = ctk.CTkButton(entry_frame, text="Send", command=self.send_message, fg_color='#3C808C', hover_color='#4092a0')
+        self.send_button.pack(side="right")
+
+        return frame
+
+    def create_report_page(self):
+        frame = ctk.CTkFrame(self.content_frame, fg_color="white")
+
+        title = ctk.CTkLabel(frame, text='Your monthly report!', font=ctk.CTkFont('Inter', 18, 'bold'))
+        title.pack(anchor='center', pady=(20,0))
+
+        self.pdf_button = ctk.CTkButton(frame, text="Open PDF", command=lambda: create_pdf(("montlhy_report", '1'), webbrowser.open("monthly_report.pdf")), fg_color="#3C808C", hover_color="#4092a0")
+        self.pdf_button.pack(pady=10)
+
+        return frame
+
+    def show_chatbot(self):
+        self.report_page.pack_forget()
+        self.chatbot_page.pack(fill="both", expand=True)
+
+    def show_report(self):
+        self.chatbot_page.pack_forget()
+        self.report_page.pack(fill="both", expand=True)
+            
 class TeacherHome(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)

@@ -28,6 +28,7 @@ def getParticipation(id_aluno):
             for key, value in messages.items():
                 if key == student:
                     participations.append(round(len(value)/len(lines)*100, 2))
+        print(f"Final participation percentages: {participations}")
         return participations
 
 def getOcurrence(id_aluno):
@@ -158,3 +159,7 @@ def getPhraseLength(id_aluno):
         print("No phrases found for the student.")
         
     return average_length
+
+def getName(id_aluno):
+    student = Student.get_name(id_aluno)[0][0]
+    return student
