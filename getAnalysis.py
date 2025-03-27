@@ -9,6 +9,8 @@ def getParticipation(id_aluno):
         participations = []
         student = Student.get_id(id_aluno)
         texts = Transcription.get_by_id(id_aluno)
+        name = getName(id_aluno)
+
         for text in texts:
             messages = {}
 
@@ -26,8 +28,9 @@ def getParticipation(id_aluno):
                 messages.setdefault(sender, []).extend([content])
             
             for key, value in messages.items():
-                if key == student:
+                if key == name:
                     participations.append(round(len(value)/len(lines)*100, 2))
+
         print(f"Final participation percentages: {participations}")
         return participations
 

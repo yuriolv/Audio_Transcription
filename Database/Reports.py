@@ -29,6 +29,11 @@ class ReportsCRUD:
         query = "SELECT Name, Class_participation, Report_date, Repeated_mistakes, English_percentage, Behavioral_state FROM Reports"
         return self.execute_query(query, fetch=True)
     
+    def get_report(self, student_id):
+        """Retorna todos os relatórios armazenados."""
+        query = "SELECT Name, Class_participation, Report_date, Repeated_mistakes, English_percentage, Behavioral_state FROM Reports WHERE Student_id = ?"
+        return self.execute_query(query, (student_id,), fetch=True)
+    
     def update_report(self, report_id, name=None, class_participation=None, report_date=None, repeated_mistakes=None, english_percentage=None, behavioral_state=None):
         """Atualiza um relatório com base no ID."""
         fields = []

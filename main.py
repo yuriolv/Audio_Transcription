@@ -1,5 +1,8 @@
 import customtkinter as ctk
+import textwrap
 from tkinter import ttk
+from langchain_ollama import OllamaLLM
+from langchain.memory import ConversationBufferMemory
 import textwrap
 from Utils.getTranscription import get_Transcription
 from pathlib import Path
@@ -137,6 +140,12 @@ class StudentHome(ctk.CTkFrame):
         self.controller = controller
         self.configure(fg_color="#FFFFFF")
 
+        self.llm = OllamaLLM(model="llama3.2")
+
+        self.memory = ConversationBufferMemory()
+        self.memory.chat_memory.add_user_message('')
+        self.get_user_info()
+
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=4)
@@ -155,6 +164,7 @@ class StudentHome(ctk.CTkFrame):
             self.sidebar_frame, text="Chatbot", command=self.show_chatbot, fg_color="#1a5c68", hover_color='#4092a0'
         )
         self.chatbot_button.pack(fill="x", padx=10, pady=5)
+        
 
         self.report_button = ctk.CTkButton(
             self.sidebar_frame, text="Report", command=self.show_report, fg_color="#1a5c68", hover_color='#4092a0'
@@ -168,12 +178,70 @@ class StudentHome(ctk.CTkFrame):
         self.report_page = self.create_report_page()
 
         self.show_chatbot()
+
+    def get_chatbot_response(self, message):
+        self.memory.chat_memory.add_user_message(message)
+
+        history = self.memory.load_memory_variables({})['history']
+
+        response = self.llm.invoke(history + "\nUser: " + message + "\nAI:")
+
+        self.memory.chat_memory.add_ai_message(response.strip())
+
+        return response.strip()
+    
+    def get_user_info(self):
+        reports = ReportsCRUD('language_school.db')
+        response = reports.get_report(1)[0]
+
+        prompt = f"""YYou are a personal assistant for students in an English course. 
+        Based on class data, here is your analysis of the student's last week:  
+                - Percentage of participation in class: {float(response[1]) * 100:.0f}%  
+                - Percentage use of English words : {float(response[4]) * 100:.0f}%  
+                - Behavioral state: {response[5]}  
+                - Repeated mistakes: {response[3]}  
+
+            Acknowledge the student's behavior as something you observed, not something they reported. For example, if participation was low, mention that you noticed it. If their behavior was positive, recognize it. Use this information to give constructive and direct feedback, helping the student improve. Keep your responses clear, objective, and relevant."""
+
+        self.memory.chat_memory.add_user_message(prompt)
+    
+
+    def send_message_on_enter(self, event=None):
+        self.send_message()
         
     def send_message(self):
-        message = self.chat_entry.get()
+        message = self.chat_entry.get().strip()
+        message = textwrap.fill(message, 60)
         if message:
-            self.chat_history.configure(text=self.chat_history.cget("text") + "\nYou: " + message)
+            user_label = ctk.CTkLabel(self.chat_frame, text=message,
+                                    font=ctk.CTkFont('Inter', 14),
+                                    fg_color="#DCF8C6", text_color="black",
+                                    corner_radius=10, padx=10, pady=5, justify='left')
+            user_label.pack(anchor="e", padx=10, pady=4) 
             self.chat_entry.delete(0, 'end')
+            self.chat_frame.update_idletasks()
+            self.chat_frame._parent_canvas.yview_moveto(1.0)
+
+            
+
+            response = self.get_chatbot_response(message)
+            response = textwrap.fill(response, 60)
+
+            bot_label = ctk.CTkLabel(self.chat_frame, text="        ", 
+                                    font=ctk.CTkFont('Inter', 14),
+                                    fg_color="#DCF8C6", text_color="black",
+                                    corner_radius=10, padx=10, pady=5, justify='left', width=400)
+            bot_label.pack(anchor="w", padx=10, pady=4) 
+
+            self.display_text_slowly(bot_label, response)
+
+
+    def display_text_slowly(self, label, text, index=0):
+        """Função recursiva para exibir texto lentamente, simulando digitação"""
+        if index < len(text):
+            label.configure(text=text[:index + 1])
+            self.after(30, self.display_text_slowly, label, text, index + 1)
+            self.chat_frame._parent_canvas.yview_moveto(1.0)  
             
     def create_chatbot_page(self):
         frame = ctk.CTkFrame(self.content_frame, fg_color="white")
@@ -192,6 +260,7 @@ class StudentHome(ctk.CTkFrame):
 
         self.chat_entry = ctk.CTkEntry(entry_frame, placeholder_text="Type a message...", width=300)
         self.chat_entry.pack(side="left", fill="x", expand=True, padx=(0,10))
+        self.chat_entry.bind("<Return>", self.send_message_on_enter)
 
         self.send_button = ctk.CTkButton(entry_frame, text="Send", command=self.send_message, fg_color='#3C808C', hover_color='#4092a0')
         self.send_button.pack(side="right")
@@ -204,7 +273,7 @@ class StudentHome(ctk.CTkFrame):
         title = ctk.CTkLabel(frame, text='Your monthly report!', font=ctk.CTkFont('Inter', 18, 'bold'))
         title.pack(anchor='center', pady=(20,0))
 
-        self.pdf_button = ctk.CTkButton(frame, text="Open PDF", command=lambda: create_pdf(("montlhy_report", '1'), webbrowser.open("monthly_report.pdf")), fg_color="#3C808C", hover_color="#4092a0")
+        self.pdf_button = ctk.CTkButton(frame, text="Open PDF", command=lambda: (create_pdf("monthly_report.pdf", 1), webbrowser.open("monthly_report.pdf")), fg_color="#3C808C", hover_color="#4092a0")
         self.pdf_button.pack(pady=10)
 
         return frame
@@ -217,7 +286,7 @@ class StudentHome(ctk.CTkFrame):
         self.chatbot_page.pack_forget()
         self.report_page.pack(fill="both", expand=True)
             
-class TeacherHome(ctk.CTkFrame):
+class TeacherHome(ctk.CTkFrame): 
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
