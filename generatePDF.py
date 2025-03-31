@@ -7,13 +7,14 @@ from getAnalysis import getOcurrence, getParticipation, getLanguage, getPhraseLe
 
 # Criação do gráfico 
 def create_speedometer(percentage, output_path = "Assets/Images/speedometer.png"):
-    fig, ax = plt.subplots(figsize=(4, 2), subplot_kw={'projection': 'polar'})
+    fig, ax = plt.subplots(figsize=(6, 3), subplot_kw={'projection': 'polar'})
+    ax.set_aspect(1)
     
-    colors = ['#882577', '#631974', '#440c74'] # Baixo, médio de alto (em relação ao uso do inglês)
+    colors = ['#55aaaa', '#40848c', '#23535a'] # Baixo, médio de alto (em relação ao uso do inglês)
     ranges = [33, 66, 100]
     
-    fig.patch.set_facecolor("#e8e2ee")
-    ax.set_facecolor("#e8e2ee")
+    fig.patch.set_facecolor('#e8e2ee')
+    ax.set_facecolor('#e8e2ee')
     
     # Converte a porcentagem para radiano
     rad = np.deg2rad(180 * (percentage / 100))
@@ -26,7 +27,7 @@ def create_speedometer(percentage, output_path = "Assets/Images/speedometer.png"
     for i in range(len(ranges)):
         end_angle = np.deg2rad(180 * (ranges[i] / 100))
         ax.barh(y=1, width=end_angle - start_angle, left=start_angle, 
-                color=colors[i], height=0.5, edgecolor="black")
+                color=colors[i], height=0.5, edgecolor='black')
         start_angle = end_angle  # Atualiza para a próxima seção
     
     # Agulha
@@ -45,7 +46,7 @@ def draw_section(c, rect_x, rect_y, rect_width, rect_height, title):
     width, height = A4
     
     # Background
-    c.setFillColor(colors.HexColor("#e8e2ee"))
+    c.setFillColor(colors.HexColor('#e8e2ee'))
     c.rect(rect_x, rect_y - rect_height, rect_width, rect_height, fill=True, stroke=True)
     
     # Título
@@ -56,7 +57,7 @@ def draw_section(c, rect_x, rect_y, rect_width, rect_height, title):
 def table(c, rect_x, rect_y, student_participation, rect_width, rect_height):
     bar_width = 30
     bar_gap = 10
-    max_height = 150
+    max_height = 100
     table_width = len(student_participation) * (bar_width + bar_gap)
 
     table_x = rect_x + (rect_width - table_width) / 2
@@ -66,7 +67,7 @@ def table(c, rect_x, rect_y, student_participation, rect_width, rect_height):
     for i, participation in enumerate(student_participation):
         bar_height = max_height * (participation / 100)
         bar_x = table_x + (i * (bar_width + bar_gap))
-        c.setFillColor(colors.HexColor("#f1457e"))
+        c.setFillColor(colors.HexColor('#40848c'))
         c.rect(bar_x, table_y, bar_width, bar_height, fill=True, stroke=False)
         
         number_y = table_y - 10 
@@ -97,27 +98,27 @@ def create_pdf(file_name, student_id):
     width, height = A4
     
     # Background
-    c.setFillColor(colors.HexColor("#e8e2ee"))
+    c.setFillColor(colors.HexColor('#e8e2ee'))
     c.rect(0, 0, width, height, fill=True)
 
     # Header
     header_height = 80
-    c.setFillColor(colors.HexColor("#400e72"))
+    c.setFillColor(colors.HexColor('#40848c'))
     c.rect(0, height - header_height, width, header_height, fill=True)
-    logo_path = "Assets/Images/geoenglish.PNG"
-    logo_width = 60
-    logo_height = 60
-    c.drawImage(logo_path, 20, height - logo_height - 10, width=logo_width, height=logo_height, preserveAspectRatio=True, mask='auto')
+    logo_path = "Assets/Images/image5.png"
+    logo_width = 100
+    logo_height = 90
+    c.drawImage(logo_path, 20, height - logo_height + 10, width=logo_width, height=logo_height, preserveAspectRatio=True, mask='auto')
 
     title = 'MONTHLY REPORT' 
     c.setFont("Helvetica-Bold", 24)
-    c.setFillColor(colors.HexColor("#f1457e"))
+    c.setFillColor(colors.HexColor('#fefefe'))
     title_width = c.stringWidth(title, "Helvetica-Bold", 24)
-    c.drawString((width - title_width) / 2, height - header_height + 25, title)
+    c.drawString((width - title_width) / 2, height - header_height + 40, title)
     c.setFont("Helvetica-Bold", 14)
-    c.setFillColor(colors.HexColor("#f1457e"))
+    c.setFillColor(colors.HexColor('#fefefe'))
     student_width = c.stringWidth(getName(student_id), "Helvetica-Bold", 14)
-    c.drawString((width - student_width) / 2, height - header_height + 5, getName(student_id))
+    c.drawString((width - student_width) / 2, height - header_height + 20, getName(student_id))
 
     # Seções
     sections = [("Repeated mistakes", getOcurrence(student_id)),
@@ -157,7 +158,7 @@ def create_pdf(file_name, student_id):
             eng_percentage = data
             create_speedometer(percentage=eng_percentage)
             c.setFont("Helvetica", 12)
-            c.drawImage("Assets/Images/speedometer.png", 190, rect_y - 20, width=200, height=100)
+            c.drawImage("Assets/Images/speedometer.png", 200, rect_y - 40, width=170, height=120)
             if eng_percentage > 50:
                 message = "You speak primarily in English! Keep it up!" 
             else:
@@ -180,7 +181,7 @@ def create_pdf(file_name, student_id):
             for line in lines:
                 c.drawString(60, y_position-20, line)
                 y_position -= 20
-
+            
     c.save()
 
 if __name__ == "__main__":
