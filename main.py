@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from tkinter import ttk
 from langchain_ollama import OllamaLLM
-from langchain.chains.conversation.memory import ConversationBufferMemory
+#from langchain.memory import ConversationBufferMemory
 import textwrap
 from Utils.getTranscription import get_Transcription
 from pathlib import Path
@@ -140,28 +140,74 @@ class StudentHome(ctk.CTkFrame):
         self.configure(fg_color="#FFFFFF")
 
         self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=4)
+        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(1, weight=1)
 
         # Sidebar
         self.sidebar_frame = ctk.CTkFrame(self, fg_color="#3C808C", corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, sticky='nswe')
+        self.sidebar_frame.configure(width=250)
+        self.sidebar_frame.pack_propagate(False)
         self.sidebar_frame.grid_propagate(False)
+        self.sidebar_frame.update_idletasks()
 
         image = Image.open("Assets/Images/image5.png")  
         logo = ctk.CTkImage(image, size=(120, 70))
         logo_label = ctk.CTkLabel(self.sidebar_frame, text='', image=logo)
         logo_label.pack(anchor='center', pady=(50,0))
 
+        robot_image = Image.open("Assets/Images/robot.png")
+        robot_logo = ctk.CTkImage(robot_image, size=(25, 25))
         self.chatbot_button = ctk.CTkButton(
-            self.sidebar_frame, text="Chatbot", command=self.show_chatbot, fg_color="#1a5c68", hover_color='#4092a0'
+            self.sidebar_frame, 
+            font=ctk.CTkFont(family='Inter',size=12, weight='bold'),
+            text="Chatbot", 
+            command=self.show_chatbot, 
+            fg_color="#1a5c68", 
+            hover_color='#4092a0',
+            image=robot_logo,
+            width=40,
+            compound='left',
+            anchor='w',
+            height=20,
+            corner_radius=10,
+            border_spacing=11
         )
-        self.chatbot_button.pack(fill="x", padx=10, pady=5)
+        self.chatbot_button.pack(fill="x", padx=10, pady=(20, 5), expand=False)
 
+        report_image = Image.open("Assets/Images/report.png")
+        report_logo = ctk.CTkImage(report_image, size=(25, 25))
         self.report_button = ctk.CTkButton(
-            self.sidebar_frame, text="Report", command=self.show_report, fg_color="#1a5c68", hover_color='#4092a0'
+            self.sidebar_frame, 
+            font=ctk.CTkFont(family='Inter',size=12, weight='bold'),
+            text="Report", 
+            command=self.show_report, 
+            fg_color="#1a5c68", 
+            hover_color='#4092a0',
+            image=report_logo,
+            width=40,
+            compound='left',
+            anchor='w',
+            height=20,
+            corner_radius=10,
+            border_spacing=11
         )
-        self.report_button.pack(fill="x", padx=10, pady=5)
+        self.report_button.pack(fill="x", padx=10, pady=5, expand=False)
+
+        self.tempBack_button = ctk.CTkButton (
+            self.sidebar_frame,
+            text="Temporary go back",
+            command=self.go_to_login_screen,
+            fg_color="#1a5c68", 
+            hover_color='#4092a0',
+            width=40,
+            compound='left',
+            anchor='w',
+            height=20,
+            corner_radius=10,
+            border_spacing=11
+        )
+        self.tempBack_button.pack(fill="x", padx=10, pady=(10, 5), expand=False)
 
         self.content_frame = ctk.CTkFrame(self, corner_radius=0)
         self.content_frame.grid(row=0, column=1, sticky="nswe")
@@ -170,7 +216,11 @@ class StudentHome(ctk.CTkFrame):
         self.report_page = self.create_report_page()
 
         self.show_chatbot()
-        
+    
+    def go_to_login_screen(self):
+        self.pack_forget()
+        self.controller.show_frame(LoginScreen)
+    
     def send_message(self):
         message = self.chat_entry.get()
         if message:
@@ -186,7 +236,7 @@ class StudentHome(ctk.CTkFrame):
         self.chat_frame = ctk.CTkScrollableFrame(frame, height=300, fg_color="grey90")
         self.chat_frame.pack(fill="both", pady=(10,5), padx=20)
 
-        self.chat_history = ctk.CTkLabel(self.chat_frame, text='', font=ctk.CTkFont('Inter', 14), justify="left", wraplength=400)
+        self.chat_history = ctk.CTkLabel(self.chat_frame, text='', font=ctk.CTkFont('Inter', 14), justify="left", wraplength=500)
         self.chat_history.pack(anchor="w", padx=10, pady=10)
 
         entry_frame = ctk.CTkFrame(frame, fg_color='transparent')
@@ -214,10 +264,12 @@ class StudentHome(ctk.CTkFrame):
     def show_chatbot(self):
         self.report_page.pack_forget()
         self.chatbot_page.pack(fill="both", expand=True)
+        self.sidebar_frame.update_idletasks()
 
     def show_report(self):
         self.chatbot_page.pack_forget()
         self.report_page.pack(fill="both", expand=True)
+        self.sidebar_frame.update_idletasks()
             
 class TeacherHome(ctk.CTkFrame):
     def __init__(self, parent, controller):
