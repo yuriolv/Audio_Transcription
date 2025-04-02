@@ -1,7 +1,8 @@
 import customtkinter as ctk
+import textwrap
 from tkinter import ttk
 from langchain_ollama import OllamaLLM
-#from langchain.memory import ConversationBufferMemory
+from langchain.memory import ConversationBufferMemory
 import textwrap
 from Utils.getTranscription import get_Transcription
 from pathlib import Path
@@ -71,7 +72,7 @@ class LoginScreen(ctk.CTkFrame):
 
         title = ctk.CTkLabel(self, text_color='#000000', text='Welcome to LauraFix! Please login into your account.',font=ctk.CTkFont(family='Inter',size=18))
         title.grid(column=1, row=0, sticky='s')
-        
+
         image = Image.open("Assets/Images/image5.png")  
         logo = ctk.CTkImage(image, size=(160,95))
 
@@ -84,7 +85,7 @@ class LoginScreen(ctk.CTkFrame):
         middle_frame.grid_rowconfigure(0, weight=1)
         middle_frame.grid_columnconfigure(0, weight=1)
         middle_frame.grid_columnconfigure(1, weight=1)
-        
+
         teacher_button = ctk.CTkButton(
             middle_frame, text="Teacher", 
             command=lambda: self.go_to_teacher_screen(), 
@@ -92,9 +93,9 @@ class LoginScreen(ctk.CTkFrame):
             hover_color="#4092a0", 
             font=ctk.CTkFont(family='Inter')
             )
-            
+
         teacher_button.grid(column=1, row=0, padx=10)
-        
+
         student_button = ctk.CTkButton(
             middle_frame, text="Student", 
             command=lambda: self.go_to_student_screen(), 
@@ -102,33 +103,33 @@ class LoginScreen(ctk.CTkFrame):
             hover_color="#4092a0", 
             font=ctk.CTkFont(family='Inter')
             )
-        
+
         student_button.grid(column=2, row=0, padx=10)
 
     def load_student_screen(self):
         print("Loading student screen...")
         self.controller.show_frame (StudentHome)
-        
+
     def load_teacher_screen(self):
         print("Loading first screen...")
         self.controller.show_frame(TeacherHome)
-        
+
     def select_option(self, option):
         self.error_label.configure(text="")  
         self.selected[0] = option
-    
+
     def go_to_teacher_screen(self):
         file_name = self.selected[0]
         self.controller.shared_data = file_name
-            
+
         procces_thread = threading.Thread(target=self.load_teacher_screen)
         procces_thread.start()
         self.controller.show_frame(LoadingScreen)
-   
+
     def go_to_student_screen(self):
         file_name = self.selected[0]
         self.controller.shared_data = file_name
-    
+
         procces_thread = threading.Thread(target=self.load_student_screen)
         procces_thread.start()
         self.controller.show_frame(LoadingScreen)
@@ -138,6 +139,12 @@ class StudentHome(ctk.CTkFrame):
         super().__init__(parent)
         self.controller = controller
         self.configure(fg_color="#FFFFFF")
+
+        self.llm = OllamaLLM(model="llama3.2")
+
+        self.memory = ConversationBufferMemory()
+        self.memory.chat_memory.add_user_message('')
+        self.get_user_info()
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=0)
@@ -177,6 +184,7 @@ class StudentHome(ctk.CTkFrame):
 
         report_image = Image.open("Assets/Images/report.png")
         report_logo = ctk.CTkImage(report_image, size=(25, 25))
+
         self.report_button = ctk.CTkButton(
             self.sidebar_frame, 
             font=ctk.CTkFont(family='Inter',size=12, weight='bold'),
@@ -218,6 +226,10 @@ class StudentHome(ctk.CTkFrame):
         self.show_chatbot()
         self.after(2500, self.show_initial_message)
 
+    def go_to_login_screen(self):
+        self.pack_forget()
+        self.controller.show_frame(LoginScreen)
+
     def show_initial_message(self):
         bot_label = ctk.CTkLabel(self.chat_frame, text="        ", 
                                 font=ctk.CTkFont('Inter', 14),
@@ -238,7 +250,7 @@ class StudentHome(ctk.CTkFrame):
         self.memory.chat_memory.add_ai_message(response.strip())
 
         return response.strip()
-    
+
     def get_user_info(self):
         reports = ReportsCRUD('language_school.db')
         response = reports.get_report(1)[0]
@@ -246,6 +258,9 @@ class StudentHome(ctk.CTkFrame):
         prompt = f"""You are a personal assistant for students in an English course.  
                         Before we start, ask what language he would you like to communicate in. (e.g., English, Spanish, Portuguese)  
                         Regardless of the choice, all examples will be provided in English.  
+
+
+
 
                         Based on class data, here is your analysis of the student's last week:  
                             - Percentage of participation in class: {float(response[1]) * 100:.0f}%  
@@ -259,17 +274,45 @@ class StudentHome(ctk.CTkFrame):
                         Keep responses clear, objective and short. Remember, all examples will be given in English."""
 
         self.memory.chat_memory.add_user_message(prompt)
-    
-    def go_to_login_screen(self):
-        self.pack_forget()
-        self.controller.show_frame(LoginScreen)
-    
+
+
+    def send_message_on_enter(self, event=None):
+        self.send_message()
+
     def send_message(self):
-        message = self.chat_entry.get()
+        message = self.chat_entry.get().strip()
+        message = textwrap.fill(message, 60)
         if message:
-            self.chat_history.configure(text=self.chat_history.cget("text") + "\nYou: " + message)
+            user_label = ctk.CTkLabel(self.chat_frame, text=message,
+                                    font=ctk.CTkFont('Inter', 14),
+                                    fg_color="#DCF8C6", text_color="black",
+                                    corner_radius=10, padx=10, pady=5, justify='left')
+            user_label.pack(anchor="e", padx=10, pady=4) 
             self.chat_entry.delete(0, 'end')
-            
+            self.chat_frame.update_idletasks()
+            self.chat_frame._parent_canvas.yview_moveto(1.0)
+
+
+
+            response = self.get_chatbot_response(message)
+            response = textwrap.fill(response, 60)
+
+            bot_label = ctk.CTkLabel(self.chat_frame, text="        ", 
+                                    font=ctk.CTkFont('Inter', 14),
+                                    fg_color="#DCF8C6", text_color="black",
+                                    corner_radius=10, padx=10, pady=5, justify='left', width=400)
+            bot_label.pack(anchor="w", padx=10, pady=4) 
+
+            self.display_text_slowly(bot_label, response)
+
+
+    def display_text_slowly(self, label, text, index=0):
+        """Função recursiva para exibir texto lentamente, simulando digitação"""
+        if index < len(text):
+            label.configure(text=text[:index + 1])
+            self.after(30, self.display_text_slowly, label, text, index + 1)
+            self.chat_frame._parent_canvas.yview_moveto(1.0)  
+
     def create_chatbot_page(self):
         frame = ctk.CTkFrame(self.content_frame, fg_color="white")
 
@@ -287,6 +330,7 @@ class StudentHome(ctk.CTkFrame):
 
         self.chat_entry = ctk.CTkEntry(entry_frame, placeholder_text="Type a message...", width=300)
         self.chat_entry.pack(side="left", fill="x", expand=True, padx=(0,10))
+        self.chat_entry.bind("<Return>", self.send_message_on_enter)
 
         self.send_button = ctk.CTkButton(entry_frame, text="Send", command=self.send_message, fg_color='#3C808C', hover_color='#4092a0')
         self.send_button.pack(side="right")
@@ -299,7 +343,7 @@ class StudentHome(ctk.CTkFrame):
         title = ctk.CTkLabel(frame, text='Your monthly report!', font=ctk.CTkFont('Inter', 18, 'bold'))
         title.pack(anchor='center', pady=(20,0))
 
-        self.pdf_button = ctk.CTkButton(frame, text="Open PDF", command=lambda: create_pdf(("montlhy_report", 1), webbrowser.open("monthly_report.pdf")), fg_color="#3C808C", hover_color="#4092a0")
+        self.pdf_button = ctk.CTkButton(frame, text="Open PDF", command=lambda: (create_pdf("monthly_report.pdf", 1), webbrowser.open("monthly_report.pdf")), fg_color="#3C808C", hover_color="#4092a0")
         self.pdf_button.pack(pady=10)
 
         return frame
@@ -313,8 +357,8 @@ class StudentHome(ctk.CTkFrame):
         self.chatbot_page.pack_forget()
         self.report_page.pack(fill="both", expand=True)
         self.sidebar_frame.update_idletasks()
-            
-class TeacherHome(ctk.CTkFrame):
+
+class TeacherHome(ctk.CTkFrame): 
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.controller = controller
@@ -358,7 +402,7 @@ class TeacherHome(ctk.CTkFrame):
             dropdown_fg_color="#FFFFFF",
             button_hover_color="#4092a0"
         )
-        
+
         self.combobox.grid(column=0, row=0, padx=10)
         self.combobox.set('Lessons')
 
@@ -369,9 +413,9 @@ class TeacherHome(ctk.CTkFrame):
             hover_color="#4092a0", 
             font=ctk.CTkFont(family='Inter')
             )
-            
+
         start_button.grid(column=1, row=0, padx=10)
-        
+
         """ report_button = ctk.CTkButton(
             middle_frame, text="Go to report", 
             command=lambda: (create_pdf("monthly_report.pdf", 1), webbrowser.open("monthly_report.pdf")), 
@@ -379,7 +423,7 @@ class TeacherHome(ctk.CTkFrame):
             hover_color="#4092a0", 
             font=ctk.CTkFont(family='Inter')
             ) """
-        
+
         report_button = ctk.CTkButton(
             middle_frame, text="Go to report", 
             command=lambda: self.go_to_report_screen(), 
@@ -387,7 +431,7 @@ class TeacherHome(ctk.CTkFrame):
             hover_color="#4092a0", 
             font=ctk.CTkFont(family='Inter')
             )
-        
+
         report_button.grid(column=2, row=0, padx=10)
 
         self.error_label = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=14), text_color="red")
@@ -407,7 +451,7 @@ class TeacherHome(ctk.CTkFrame):
         procces_thread = threading.Thread(target=self.load_report_screen)
         procces_thread.start()
         self.controller.show_frame(LoadingScreen)
-        
+
     def load_report_screen(self):
         print("Loading report screen...")
         self.controller.show_frame(ReportScreen)
@@ -417,8 +461,8 @@ class TeacherHome(ctk.CTkFrame):
         if self.selected[0] is not None:
             file_name = self.selected[0]
             self.controller.shared_data = file_name
-            
-            
+
+
             procces_thread = threading.Thread(target=self.load_classReport)
             procces_thread.start()
             self.controller.show_frame(LoadingScreen)
@@ -426,11 +470,11 @@ class TeacherHome(ctk.CTkFrame):
         else:
             self.error_label.configure(text="No file selected! Please select one and try again.")
             return
-        
+
     def load_classReport(self):
         self.controller.show_frame(ClassReport)
-        
-        
+
+
     def get_files(self):
         main_directory = Path("Assets/Transcriptions")
         subdirectories = []
@@ -444,11 +488,11 @@ class TeacherHome(ctk.CTkFrame):
                 formated_date = date_obj.strftime(f'%d/%m/%y %H:%M')
 
                 subdirectories.append(f'{name[2]} {name[3]} - {formated_date}')
-        
+
         if not subdirectories: return None
 
         return subdirectories
-    
+
 class LoadingScreen(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
@@ -458,7 +502,7 @@ class LoadingScreen(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
-        
+
         label_title = ctk.CTkLabel(
             self,
             text="Loading, please wait...",
@@ -554,15 +598,32 @@ class ReportScreen(ctk.CTkFrame):
 
         back_button = ctk.CTkButton(self, text="Back",fg_color='#3C808C', hover_color='#4092a0',command = lambda: self.go_to_teacherHome())
         back_button.pack(anchor='center', pady=15)
-    
+
     def initialize(self):
         try:
             self.is_initialized = True
         except Exception as e:
             print("Error initializing ReportScreen", e)
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def go_to_teacherHome(self):
         print("Back button pressed!!")
+
         self.is_initialized = False
         self.controller.show_frame(TeacherHome)
 
@@ -604,13 +665,13 @@ class ClassReport(ctk.CTkFrame):
 
         button_frame = ctk.CTkFrame(self.content_frame, fg_color='transparent')
         button_frame.pack(anchor="center")
-        
+
 
         self.selected_phrase = None
-        
+
         self.edit_button = ctk.CTkButton(button_frame, fg_color='#3C808C', hover_color='#4092a0', text="Edit", command=lambda:self.edit_phrase(self.selected_phrase))
         self.edit_button.pack(side="left", padx=7)
-        
+
         back_button = ctk.CTkButton(button_frame, text="Back",fg_color='#3C808C', hover_color='#4092a0',command=self.back_to_first_screen)
         back_button.pack(side="left", padx=7)
 
@@ -661,19 +722,19 @@ class ClassReport(ctk.CTkFrame):
             self.is_initialized = True
         except Exception as e:
             print(e)
-    
+
     def select_phrase(self, phrase):
         self.selected_phrase = phrase
-    
+
     def edit_phrase(self, phrase):
         if phrase is None:
             print("Error: The phrase passed to edit_window is None.")  
             return
-    
+
         self.edit_window = ctk.CTkToplevel(self)
         self.edit_window.iconbitmap("Assets/Images/image15.ico")
         self.edit_window.title("Edit Message")
-        
+
         window_width = 500
         window_height = 250
 
@@ -682,17 +743,17 @@ class ClassReport(ctk.CTkFrame):
         x_offset = (screen_width - window_width) // 2
         y_offset = (screen_height - window_height) // 2
         self.edit_window.geometry(f"{window_width}x{window_height}+{x_offset}+{y_offset}")
-        
+
         self.edit_window.transient(self)
         self.edit_window.grab_set()
         self.edit_window.lift()
         self.edit_window.focus_force()
-        
+
         self.textbox = ctk.CTkTextbox(self.edit_window, width=400, height=150)  
         self.textbox.pack(side="top", padx=15, pady=10, expand=True)
         self.textbox.insert("0.0", phrase.content)
         self.edit_window.after(200, lambda: self.edit_window.update_idletasks())  
-        
+
         self.save_button = ctk.CTkButton(self.edit_window, text="Save", fg_color="#3C808C", hover_color="#4092a0", 
                                         command=lambda: self.save_changes(phrase))
         self.save_button.pack(side="left", padx=15, pady=10, expand=True)
@@ -700,10 +761,10 @@ class ClassReport(ctk.CTkFrame):
         self.cancel_button = ctk.CTkButton(self.edit_window, text="Cancel", fg_color="#808080", hover_color="#909090", 
                                         command=self.edit_window.destroy)
         self.cancel_button.pack(side="left", padx=15, pady=10, expand=True)
-        
+
         self.edit_window.update()
         self.edit_window.after(201, lambda: self.edit_window.iconbitmap("Assets/Images/image15.ico"))
-        
+
     def save_changes(self, phrase):
         new_text = self.textbox.get("1.0", "end-1c")  
         print(f"Novo texto : {new_text}")
@@ -714,7 +775,7 @@ class ClassReport(ctk.CTkFrame):
             self.show_student_phrases(self.current_student)  
 
         self.edit_window.destroy()      
-        
+
 
     def highlight_selected_button(self, selected_button):
         for button in self.student_buttons:
@@ -732,7 +793,7 @@ class ClassReport(ctk.CTkFrame):
         for button in self.student_buttons:
             button.destroy()
         self.student_buttons = []
-    
+
     def clear_confirmation(self):
         self.confirmation_window.destroy()
         self.confirmation_window.update_idletasks()
@@ -746,7 +807,7 @@ class ClassReport(ctk.CTkFrame):
     def show_student_phrases(self, student):
         self.clear_checkbutton_frame()
         self.current_student = student
-        
+
         for phrase in student.phrases:
             var = ctk.BooleanVar(value=False)
             chk = ctk.CTkCheckBox(
@@ -759,7 +820,7 @@ class ClassReport(ctk.CTkFrame):
                 width=450,
                 variable=var,
                 text_color="black",
-                
+
             )
             chk.configure(command=lambda p=phrase: self.checkbox_changed(p))
 
@@ -780,7 +841,7 @@ class ClassReport(ctk.CTkFrame):
             self.select_phrase(phrase)
         else:
             self.select_phrase(None)
-        
+
     def show_confirmation(self, success):
         self.confirmation_window = ctk.CTkToplevel(self)
         self.confirmation_window.iconbitmap("Assets/Images/image15.ico")  
@@ -815,12 +876,12 @@ class ClassReport(ctk.CTkFrame):
 
         self.confirmation_window.after(201, lambda: self.confirmation_window.iconbitmap("Assets/Images/image15.ico"))
 
-    
+
     def put_message(self, students):
         for student in students:
             found = False
             text = 'Errors detected during the lesson:\n'
-            
+
             for index, phrase in enumerate(student.phrases):
                 if phrase.check:
                     found = True
@@ -834,7 +895,7 @@ class ClassReport(ctk.CTkFrame):
                     self.show_confirmation(response)
                 except Exception as e:
                     print(e)
-        
+
 
 if __name__ == "__main__":
     app = App()
