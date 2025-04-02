@@ -178,6 +178,17 @@ class StudentHome(ctk.CTkFrame):
         self.report_page = self.create_report_page()
 
         self.show_chatbot()
+        self.after(2500, self.show_initial_message)
+
+    def show_initial_message(self):
+        bot_label = ctk.CTkLabel(self.chat_frame, text="        ", 
+                                font=ctk.CTkFont('Inter', 14),
+                                fg_color="#DCF8C6", text_color="black",
+                                corner_radius=10, padx=10, pady=5, justify='left', width=400)
+        bot_label.pack(anchor="w", padx=10, pady=4) 
+        first_message = 'Olá, em que posso ajudá-lo hoje? Avise-me se preferir continuar a nossa conversa em inglês.'
+        self.display_text_slowly(bot_label, textwrap.fill(first_message, 60))
+        self.memory.chat_memory.add_ai_message(first_message)
 
     def get_chatbot_response(self, message):
         self.memory.chat_memory.add_user_message(message)
@@ -194,14 +205,20 @@ class StudentHome(ctk.CTkFrame):
         reports = ReportsCRUD('language_school.db')
         response = reports.get_report(1)[0]
 
-        prompt = f"""YYou are a personal assistant for students in an English course. 
-        Based on class data, here is your analysis of the student's last week:  
-                - Percentage of participation in class: {float(response[1]) * 100:.0f}%  
-                - Percentage use of English words : {float(response[4]) * 100:.0f}%  
-                - Behavioral state: {response[5]}  
-                - Repeated mistakes: {response[3]}  
+        prompt = f"""You are a personal assistant for students in an English course.  
+                        Before we start, ask what language he would you like to communicate in. (e.g., English, Spanish, Portuguese)  
+                        Regardless of the choice, all examples will be provided in English.  
 
-            Acknowledge the student's behavior as something you observed, not something they reported. For example, if participation was low, mention that you noticed it. If their behavior was positive, recognize it. Use this information to give constructive and direct feedback, helping the student improve. Keep your responses clear, objective, and relevant."""
+                        Based on class data, here is your analysis of the student's last week:  
+                            - Percentage of participation in class: {float(response[1]) * 100:.0f}%  
+                            - Percentage use of English words: {float(response[4]) * 100:.0f}%  
+                            - Behavioral state: {response[5]}  
+                            - Repeated mistakes: {response[3]}  
+
+                        I have observed your participation and behavior in class. If your participation was low, I noticed that. If your behavior was positive, I acknowledge that.  
+
+                        Use this information to provide constructive and direct feedback to help the student improve, only when they talk about it.    
+                        Keep responses clear, objective and short. Remember, all examples will be given in English."""
 
         self.memory.chat_memory.add_user_message(prompt)
     
@@ -486,20 +503,34 @@ class ReportScreen(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=4)
 
-        table_frame = ctk.CTkFrame(self)
-        table_frame.pack(expand=True, fill="both", padx=10, pady=10)
+        self.title_label = ctk.CTkLabel(self, text='Weekly Reports', font=ctk.CTkFont('Inter', 18, 'bold'))
+        self.title_label.pack(anchor='center', pady=(20, 0))
 
-        columns = ("Name", "Class_participation", "Report_date", "Repeated_mistakes", "English_percentage", "Behavioral_state")
-        tree = ttk.Treeview(table_frame, columns=columns, show="headings")
+        table_frame = ctk.CTkFrame(self)
+        table_frame.pack(expand=True, fill='x', padx=10, pady=10)
+
+        columns = ("Name", "Class participation", "Report date", "Repeated mistakes", "English percentage", "Behavioral state")
+        tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=25)
+
+        style = ttk.Style()
+        style.configure("Treeview", font=("Arial", 12), rowheight=30)
+        style.configure("Treeview.Heading", background="#3C808C", foreground="white", font=("Arial", 13, "bold"), padding=(0,20))
+        style.layout("Treeview.Heading",
+             [('Treeheading.cell', {'sticky': 'nswe', 'border': 1}),
+              ('Treeheading.padding', {'sticky': 'nswe'}),
+              ('Treeheading.label', {'sticky': 'nswe'})])
 
         for col in columns:
             tree.heading(col, text=col)
-            tree.column(col, width=70)
+            if col == 'Report date' or col == "Behavioral state":
+                tree.column(col, width=80, stretch=True, anchor="center")
+            else:
+                tree.column(col, width=140, stretch=True, anchor="center")
 
         scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
 
-        tree.pack(side="left", expand=True, fill="both")
+        tree.pack(side="left", expand=True, fill='x')
         scrollbar.pack(side="right", fill="y")
 
         def carregar_dados():
@@ -511,6 +542,7 @@ class ReportScreen(ctk.CTkFrame):
         carregar_dados()
 
         back_button = ctk.CTkButton(self, text="Back",fg_color='#3C808C', hover_color='#4092a0',command = lambda: self.go_to_teacherHome())
+        back_button.pack(anchor='center', pady=15)
     
     def initialize(self):
         try:
@@ -518,25 +550,8 @@ class ReportScreen(ctk.CTkFrame):
         except Exception as e:
             print("Error initializing ReportScreen", e)
     
-    def highlight_selected_button(self, selected_button):
-        for button in self.student_buttons:
-            button.configure(fg_color="#3C808C") 
-
-        selected_button.configure(fg_color="#1a5c68")  
-        self.active_button = selected_button
-    
-    def select_student(self, student, button):
-        print(f"the student {student.name} was selected!!")
-        self.highlight_selected_button(button)
-    
-    def clear_sidebar(self):
-        for button in self.student_buttons:
-            button.destroy()
-        self.student_buttons = []
-    
     def go_to_teacherHome(self):
         print("Back button pressed!!")
-        self.clear_sidebar()
         self.is_initialized = False
         self.controller.show_frame(TeacherHome)
 
