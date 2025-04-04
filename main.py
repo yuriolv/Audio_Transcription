@@ -2,7 +2,7 @@ import customtkinter as ctk
 import textwrap
 from tkinter import ttk
 from langchain_ollama import OllamaLLM
-from langchain.memory import ConversationBufferMemory
+from langchain_core.memory import ConversationBufferMemory
 import textwrap
 from Utils.getTranscription import get_Transcription
 from pathlib import Path
@@ -142,7 +142,7 @@ class StudentHome(ctk.CTkFrame):
 
         self.llm = OllamaLLM(model="llama3.2")
 
-        self.memory = ConversationBufferMemory()
+        #self.memory = ConversationBufferMemory()
         self.memory.chat_memory.add_user_message('')
         self.get_user_info()
 

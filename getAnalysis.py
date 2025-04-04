@@ -3,6 +3,8 @@ from Database import Corrections, Student, Transcription
 import nltk
 from textblob import TextBlob
 from langdetect import detect_langs
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
+import torch
 
 def getParticipation(id_aluno):
         nltk.download('punkt_tab') 
@@ -166,3 +168,64 @@ def getPhraseLength(id_aluno):
 def getName(id_aluno):
     student = Student.get_name(id_aluno)[0][0]
     return student
+
+model_name = "SamLowe/roberta-base-go_emotions"
+
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSequenceClassification.from_pretrained(model_name)
+
+# Labels disponíveis no dataset
+go_emotions_labels = [
+    "admiration", "amusement", "anger", "annoyance", "approval", "caring", "confusion",
+    "curiosity", "desire", "disappointment", "disapproval", "disgust", "embarrassment",
+    "excitement", "fear", "gratitude", "grief" ,"joy", "love", "nervousness", "optimism",
+    "pride", "realization", "relief", "remorse", "sadness", "surprise", "neutral"
+] 
+
+def detectEmotions(phrase, threshold=0.3):
+    inputs = tokenizer(phrase, return_tensors="pt", truncation=True)
+    with torch.no_grad():
+        outputs = model(**inputs)
+        scores = torch.softmax(outputs.logits, dim=1)[0]
+        
+    best_index = torch.argmax(scores).item()
+    best_label = go_emotions_labels[best_index]
+    best_score = round(scores[best_index].item(), 3)
+    print("best label: ",  best_label)
+    print("best score: ", best_score)
+
+    return best_label, best_score
+    
+def getEmotions(id_aluno):
+    student = Student.get_name(id_aluno)[0][0]
+    texts = Transcription.get_by_id(id_aluno)
+
+    emotions = []
+    
+    if len(texts) == 0 or student == None:
+        return
+    
+    for text in texts:
+        messages = {}
+        new_text = text[0].replace('\r', '')
+        lines = new_text.strip().split("\n\n")
+
+        for line in lines:
+            parts = line.split("\n")
+
+            header = parts[0]
+            content = parts[1]
+            
+            sender, time = header.strip("[]").rsplit("] ", 1)
+
+            messages.setdefault(sender, []).extend([content])
+            
+        for key, value in messages.items():
+            if key == student:
+                phrase = ''.join(value)
+                emotions = detectEmotions(phrase)
+                print(f"this is how {student} is feeling: {emotions}")
+                
+    return max(set(emotions), key=emotions.count)
+
+getEmotions(2)

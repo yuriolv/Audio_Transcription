@@ -158,7 +158,7 @@ def create_pdf(file_name, student_id):
             eng_percentage = data
             create_speedometer(percentage=eng_percentage)
             c.setFont("Helvetica", 12)
-            c.drawImage("Assets/Images/speedometer.png", 200, rect_y - 40, width=170, height=120)
+            c.drawImage("Assets/Images/speedometer.png", 200, rect_y - 40, width=170, height=130)
             if eng_percentage > 50:
                 message = "You speak primarily in English! Keep it up!" 
             else:
@@ -186,4 +186,4 @@ def create_pdf(file_name, student_id):
 
 if __name__ == "__main__":
     print("pdf created!")
-    create_pdf("monthly_report.pdf", '1')
+    create_pdf("monthly_report.pdf", 1)
