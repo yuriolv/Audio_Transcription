@@ -545,6 +545,10 @@ class LoadingScreen(ctk.CTkFrame):
                     break  
             return frames
 
+import tkinter as tk
+from tkinter import ttk
+import customtkinter as ctk
+
 class ReportScreen(ctk.CTkFrame):
     def __init__(self, parent, controller):
         super().__init__(parent)
@@ -588,16 +592,59 @@ class ReportScreen(ctk.CTkFrame):
         tree.pack(side="left", expand=True, fill='x')
         scrollbar.pack(side="right", fill="y")
 
+        self.tooltip_repeated = {}
+        self.tooltip_name = {}
+        CHAR_LIMIT = 22
+
         def carregar_dados():
             result = reports.read_reports()
 
             for row in result:
-                tree.insert("", "end", values=row)
+                print(row[0], len(row[0]))
+                if len(row[0]) > CHAR_LIMIT:
+                    display_name = row[0][:CHAR_LIMIT] + ' ...'
+                else:
+                    display_name = row[0]
+
+                if len(row[3]) > CHAR_LIMIT:
+                    display_repeated = row[3][:CHAR_LIMIT] + ' ...'
+                else:
+                    display_repeated = row[3]
+
+                item_id = tree.insert("", "end", values=(display_name, row[1], row[2], display_repeated, row[4], row[5]))
+
+                self.tooltip_repeated[item_id] = row[3] 
+                self.tooltip_name[item_id] = row[0] 
 
         carregar_dados()
 
-        back_button = ctk.CTkButton(self, text="Back",fg_color='#3C808C', hover_color='#4092a0',command = lambda: self.go_to_teacherHome())
+        back_button = ctk.CTkButton(self, text="Back", fg_color='#3C808C', hover_color='#4092a0', command=lambda: self.go_to_teacherHome())
         back_button.pack(anchor='center', pady=15)
+
+        tooltip_label = tk.Label(self, text="", background="white", foreground='black', relief="solid", borderwidth=1, wraplength=250)
+        tooltip_label.place_forget()
+
+        def show_tooltip(event):
+            item_id = tree.identify_row(event.y)
+            column_id = tree.identify_column(event.x)
+
+            tooltip_label.place_forget()  
+
+            if item_id:  
+                if column_id == "#4":  
+                    text = self.tooltip_repeated.get(item_id, "")
+                elif column_id == "#1":
+                    text = self.tooltip_name.get(item_id, "")
+                else:
+                    text = ""
+
+                if text: 
+                    tooltip_label.config(text=text)
+                    tooltip_label.place(x=event.x_root - self.winfo_rootx() + 20, 
+                                        y=event.y_root - self.winfo_rooty() + 20)
+
+        tree.bind("<Motion>", show_tooltip)
+
 
     def initialize(self):
         try:
