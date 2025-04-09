@@ -191,8 +191,6 @@ def detectEmotions(phrase, threshold=0.3):
     best_index = torch.argmax(scores).item()
     best_label = go_emotions_labels[best_index]
     best_score = round(scores[best_index].item(), 3)
-    print("best label: ",  best_label)
-    print("best score: ", best_score)
 
     return best_label, best_score
     
@@ -224,7 +222,6 @@ def getEmotions(id_aluno):
             if key == student:
                 phrase = ''.join(value)
                 emotions = detectEmotions(phrase)
-                print(f"this is how {student} is feeling: {emotions}")
                 
     return max(set(emotions), key=emotions.count)
 

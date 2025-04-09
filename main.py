@@ -2,7 +2,7 @@ import customtkinter as ctk
 import textwrap
 from tkinter import ttk
 from langchain_ollama import OllamaLLM
-from langchain_core.memory import ConversationBufferMemory
+from langchain.memory import ConversationBufferMemory
 import textwrap
 from Utils.getTranscription import get_Transcription
 from pathlib import Path
@@ -142,7 +142,7 @@ class StudentHome(ctk.CTkFrame):
 
         self.llm = OllamaLLM(model="llama3.2")
 
-        #self.memory = ConversationBufferMemory()
+        self.memory = ConversationBufferMemory()
         self.memory.chat_memory.add_user_message('')
         self.get_user_info()
 
@@ -436,12 +436,26 @@ class TeacherHome(ctk.CTkFrame):
 
         self.error_label = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=14), text_color="red")
         self.error_label.grid(column=1, row=2, sticky='n')
+        
+        temp_back_button = ctk.CTkButton(
+            middle_frame, text="Go back", 
+            command=lambda: self.go_to_login_screen(), 
+            fg_color="#3C808C", text_color='#FFFFFF', 
+            hover_color="#4092a0", 
+            font=ctk.CTkFont(family='Inter')
+            )
+
+        temp_back_button.grid(column=3, row=0, padx=10)
 
     def initialize(self):
         """Reinicializa os valores ao retornar para a tela inicial."""
         self.selected[0] = None
         self.combobox.set('Lessons')
         self.error_label.configure(text="")
+        
+    def go_to_login_screen(self):
+        self.pack_forget()
+        self.controller.show_frame(LoginScreen)
 
     def select_option(self, option):
         self.error_label.configure(text="")  
@@ -565,8 +579,15 @@ class ReportScreen(ctk.CTkFrame):
         self.title_label = ctk.CTkLabel(self, text='Weekly Reports', font=ctk.CTkFont('Inter', 18, 'bold'))
         self.title_label.pack(anchor='center', pady=(20, 0))
 
-        table_frame = ctk.CTkFrame(self)
-        table_frame.pack(expand=True, fill='x', padx=10, pady=10)
+        table_frame = ctk.CTkFrame(self, fg_color="#FFFFFF")
+        table_frame.pack(expand=True, fill='both', padx=10, pady=10)
+        
+        table_frame.grid_columnconfigure(0, weight=1)
+        table_frame.grid_rowconfigure(0, weight=1)
+        table_frame.grid_rowconfigure(1, weight=0)
+        
+        tree_frame = ctk.CTkFrame(table_frame, fg_color="transparent")
+        tree_frame.grid(row=0, column=0, sticky='nsew')
 
         columns = ("Name", "Class participation", "Report date", "Repeated mistakes", "English percentage", "Behavioral state")
         tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=25)
@@ -589,12 +610,26 @@ class ReportScreen(ctk.CTkFrame):
         scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
 
-        tree.pack(side="left", expand=True, fill='x')
-        scrollbar.pack(side="right", fill="y")
+        tree.grid(row=0, column=0, sticky='nsew')
+        scrollbar.grid(row=0, column=1, sticky='ns')
 
         self.tooltip_repeated = {}
         self.tooltip_name = {}
         CHAR_LIMIT = 22
+        
+        button_frame = ctk.CTkFrame(table_frame, fg_color="transparent")
+        button_frame.grid(row=1, column=0, pady=(10, 0))
+        
+        back_button = ctk.CTkButton(
+            button_frame, text="Go back", 
+            command=lambda: self.go_to_teacherHome(), 
+            fg_color="#3C808C", text_color='#FFFFFF', 
+            hover_color="#4092a0", 
+            font=ctk.CTkFont(family='Inter'),
+            width=150
+            )
+
+        back_button.pack()
 
         def carregar_dados():
             result = reports.read_reports()
