@@ -233,7 +233,7 @@ class StudentHome(ctk.CTkFrame):
     def show_initial_message(self):
         bot_label = ctk.CTkLabel(self.chat_frame, text="        ", 
                                 font=ctk.CTkFont('Inter', 14),
-                                fg_color="#DCF8C6", text_color="black",
+                                fg_color="#f6f6f6", text_color="black",
                                 corner_radius=10, padx=10, pady=5, justify='left', width=400)
         bot_label.pack(anchor="w", padx=10, pady=4) 
         first_message = 'Olá, em que posso ajudá-lo hoje? Avise-me se preferir continuar a nossa conversa em inglês.'
@@ -299,7 +299,7 @@ class StudentHome(ctk.CTkFrame):
 
             bot_label = ctk.CTkLabel(self.chat_frame, text="        ", 
                                     font=ctk.CTkFont('Inter', 14),
-                                    fg_color="#DCF8C6", text_color="black",
+                                    fg_color="#f6f6f6", text_color="black",
                                     corner_radius=10, padx=10, pady=5, justify='left', width=400)
             bot_label.pack(anchor="w", padx=10, pady=4) 
 
