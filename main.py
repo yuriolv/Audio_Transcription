@@ -1,8 +1,9 @@
 import customtkinter as ctk
+import re
 import textwrap
 from tkinter import ttk
 from langchain_ollama import OllamaLLM
-from langchain_core.memory import ConversationBufferMemory
+from langchain.memory import ConversationBufferMemory
 import textwrap
 from Utils.getTranscription import get_Transcription
 from pathlib import Path
@@ -108,7 +109,10 @@ class LoginScreen(ctk.CTkFrame):
 
     def load_student_screen(self):
         print("Loading student screen...")
-        self.controller.show_frame (StudentHome)
+        self.controller.show_frame(StudentHome)
+        student_frame = self.controller.frames[StudentHome]
+
+        student_frame.show_chatbot()
 
     def load_teacher_screen(self):
         print("Loading first screen...")
@@ -142,7 +146,7 @@ class StudentHome(ctk.CTkFrame):
 
         self.llm = OllamaLLM(model="llama3.2")
 
-        #self.memory = ConversationBufferMemory()
+        self.memory = ConversationBufferMemory()
         self.memory.chat_memory.add_user_message('')
         self.get_user_info()
 
@@ -222,13 +226,12 @@ class StudentHome(ctk.CTkFrame):
 
         self.chatbot_page = self.create_chatbot_page()
         self.report_page = self.create_report_page()
-
-        self.show_chatbot()
-        self.after(2500, self.show_initial_message)
+        
 
     def go_to_login_screen(self):
         self.pack_forget()
         self.controller.show_frame(LoginScreen)
+    
 
     def show_initial_message(self):
         bot_label = ctk.CTkLabel(self.chat_frame, text="        ", 
@@ -255,23 +258,20 @@ class StudentHome(ctk.CTkFrame):
         reports = ReportsCRUD('language_school.db')
         response = reports.get_report(1)[0]
 
-        prompt = f"""You are a personal assistant for students in an English course.  
-                        Before we start, ask what language he would you like to communicate in. (e.g., English, Spanish, Portuguese)  
+        prompt = f"""You are a personal assistant to students on an English course.  
+                        Before we start, ask them what language they would like to communicate in (e.g. English, Spanish, Portuguese) 
                         Regardless of the choice, all examples will be provided in English.  
 
+                        Based on the class data, here is your analysis of the student's last week:  
+                            - Percentage of class participation: {float(response[1]) * 100:.0f}% 
+                            - Percentage of English word usage: {float(response[4]) * 100:.0f}% 
+                            - Behavioral status: {response[5]}  
+                            - Repeated errors: {response[3]}  
 
-
-
-                        Based on class data, here is your analysis of the student's last week:  
-                            - Percentage of participation in class: {float(response[1]) * 100:.0f}%  
-                            - Percentage use of English words: {float(response[4]) * 100:.0f}%  
-                            - Behavioral state: {response[5]}  
-                            - Repeated mistakes: {response[3]}  
-
-                        I have observed your participation and behavior in class. If your participation was low, I noticed that. If your behavior was positive, I acknowledge that.  
+                        I am the course administrator, and this information is being passed on to you as if you had observed it during the lessons!  He will talk to you soon.  
 
                         Use this information to provide constructive and direct feedback to help the student improve, only when they talk about it.    
-                        Keep responses clear, objective and short. Remember, all examples will be given in English."""
+                        Keep your answers clear, objective and short. Remember that all examples will be given in English."""
 
         self.memory.chat_memory.add_user_message(prompt)
 
@@ -282,32 +282,97 @@ class StudentHome(ctk.CTkFrame):
     def send_message(self):
         message = self.chat_entry.get().strip()
         message = textwrap.fill(message, 60)
+
         if message:
+            # Exibe a mensagem do usuário
             user_label = ctk.CTkLabel(self.chat_frame, text=message,
                                     font=ctk.CTkFont('Inter', 14),
                                     fg_color="#DCF8C6", text_color="black",
                                     corner_radius=10, padx=10, pady=5, justify='left')
-            user_label.pack(anchor="e", padx=10, pady=4) 
+            user_label.pack(anchor="e", padx=10, pady=4)
+
             self.chat_entry.delete(0, 'end')
             self.chat_frame.update_idletasks()
             self.chat_frame._parent_canvas.yview_moveto(1.0)
 
-
-
-            response = self.get_chatbot_response(message)
-            response = textwrap.fill(response, 60)
-
-            bot_label = ctk.CTkLabel(self.chat_frame, text="        ", 
+            # Label do bot com tamanho reduzido e animação de "Digitando..."
+            bot_label = ctk.CTkLabel(self.chat_frame, text="Digitando", 
                                     font=ctk.CTkFont('Inter', 14),
                                     fg_color="#DCF8C6", text_color="black",
-                                    corner_radius=10, padx=10, pady=5, justify='left', width=400)
-            bot_label.pack(anchor="w", padx=10, pady=4) 
+                                    corner_radius=10, padx=10, pady=5, justify='left', 
+                                    width=200, wraplength=180)
+            bot_label.pack(anchor="w", padx=10, pady=4)
 
-            self.display_text_slowly(bot_label, response)
+            self.chat_frame.update_idletasks()
+            self.chat_frame._parent_canvas.yview_moveto(1.0)
+
+            # Inicia a animação
+            self.typing_animation_running = True
+            self.animate_typing(bot_label)
+
+            # Roda a resposta do bot em background
+            threading.Thread(target=self.handle_bot_response, args=(message, bot_label)).start()
+
+    def animate_typing(self, label, count=0):
+        if not hasattr(self, 'typing_animation_running') or not self.typing_animation_running:
+            return
+
+        dots = "." * (count % 4)
+        label.configure(text="Digitando" + dots)
+        self.after(500, self.animate_typing, label, count + 1)
+
+    def handle_bot_response(self, message, bot_label):
+        # Gera a resposta
+        response = self.get_chatbot_response(message)
+        formatted_response = self.format_response(response)
+
+        # Para a animação
+        self.typing_animation_running = False
+
+        # Atualiza visualmente no thread principal
+        self.after(0, lambda: self.show_final_response(bot_label, formatted_response))
+
+    def show_final_response(self, label, text):
+        label.configure(width=400, wraplength=390, text="")  
+        self.display_text_slowly(label, text)
+
+
+    
+    def format_response(self, text):
+        # Captura blocos com 2 a 3 frases seguidas
+        sentence_pattern = r'([^.!?]*[.!?])'
+        sentences = re.findall(sentence_pattern, text.strip())
+
+        paragraphs = []
+        buffer = ""
+
+        for i, sentence in enumerate(sentences, 1):
+            buffer += sentence.strip() + " "
+            if i % 2 == 0:
+                paragraphs.append(buffer.strip())
+                buffer = ""
+
+        if buffer:
+            paragraphs.append(buffer.strip())
+
+        formatted = []
+        for paragraph in paragraphs:
+
+            paragraph = re.sub(r'(\d+%+)', lambda m: m.group(1).upper(), paragraph)
+
+            keywords = ["behavior", "mistake", "participation", "English", "improve",
+                        'participação', 'comportamento', 'erros', 'Ingles', 'melhorar']
+            for kw in keywords:
+                paragraph = re.sub(fr'\b({kw})\b', lambda m: m.group(1).upper(), paragraph, flags=re.IGNORECASE)
+
+            formatted.append(paragraph.strip())
+
+        return '\n\n'.join(formatted)
+
+
 
 
     def display_text_slowly(self, label, text, index=0):
-        """Função recursiva para exibir texto lentamente, simulando digitação"""
         if index < len(text):
             label.configure(text=text[:index + 1])
             self.after(30, self.display_text_slowly, label, text, index + 1)
@@ -349,6 +414,7 @@ class StudentHome(ctk.CTkFrame):
         return frame
 
     def show_chatbot(self):
+        self.after(1000, self.show_initial_message)
         self.report_page.pack_forget()
         self.chatbot_page.pack(fill="both", expand=True)
         self.sidebar_frame.update_idletasks()
