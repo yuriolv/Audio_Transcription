@@ -223,6 +223,8 @@ class StudentHome(ctk.CTkFrame):
 
         self.chatbot_page = self.create_chatbot_page()
         self.report_page = self.create_report_page()
+
+        self.initial_message_shown = False
         
 
     def go_to_login_screen(self):
@@ -411,10 +413,13 @@ class StudentHome(ctk.CTkFrame):
         return frame
 
     def show_chatbot(self):
-        self.after(1000, self.show_initial_message)
         self.report_page.pack_forget()
         self.chatbot_page.pack(fill="both", expand=True)
         self.sidebar_frame.update_idletasks()
+
+        if not self.initial_message_shown:
+            self.after(1000, self.show_initial_message)
+            self.initial_message_shown = True
 
     def show_report(self):
         self.chatbot_page.pack_forget()
