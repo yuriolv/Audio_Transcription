@@ -938,6 +938,7 @@ class ClassReport(ctk.CTkFrame):
     def show_student_phrases(self, student):
         self.clear_checkbutton_frame()
         self.current_student = student
+        print(f"student: {student}")
 
         for phrase in student.phrases:
             var = ctk.BooleanVar(value=False)
@@ -954,6 +955,7 @@ class ClassReport(ctk.CTkFrame):
 
             )
             chk.configure(command=lambda p=phrase: self.checkbox_changed(p))
+            print(f"phrase: {phrase}")
 
             chk.pack(anchor="w", padx=15, pady=7)
 
@@ -1004,11 +1006,13 @@ class ClassReport(ctk.CTkFrame):
             command=self.clear_confirmation
         )
         ok_button.pack()
+        print(f"show_confirmation ran")
 
         self.confirmation_window.after(201, lambda: self.confirmation_window.iconbitmap("Assets/Images/image15.ico"))
 
 
     def put_message(self, students):
+        print("put_message began")
         for student in students:
             found = False
             text = 'Errors detected during the lesson:\n'
@@ -1025,7 +1029,10 @@ class ClassReport(ctk.CTkFrame):
                     response = send_message(text, student.email)
                     self.show_confirmation(response)
                 except Exception as e:
+                    print("not found")
                     print(e)
+        
+        print("put_message ran")
 
 
 if __name__ == "__main__":
