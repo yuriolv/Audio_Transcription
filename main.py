@@ -53,7 +53,8 @@ class App(ctk.CTk):
     def show_frame(self, tela):
         frame = self.frames[tela]
         if hasattr(frame, "initialize"):
-            frame.initialize()
+            if tela == ClassReport or not getattr(frame, "is_initialized", False):
+                frame.initialize()
         frame.tkraise()
 
 class LoginScreen(ctk.CTkFrame):
@@ -811,6 +812,9 @@ class ClassReport(ctk.CTkFrame):
 
     def initialize(self):
         try:
+            # Limpa antes de carregar
+            self.clear_sidebar()
+            self.clear_checkbutton_frame()
 
             transcripted = get_Transcription(self.controller.shared_data)
             self.students = errorDetection(transcripted)
@@ -845,6 +849,10 @@ class ClassReport(ctk.CTkFrame):
 
             if self.student_buttons:
                 self.student_buttons[0].invoke()
+            else:
+                ctk.CTkLabel(self.content_frame, text="No students with detected phrases.", 
+                            text_color="black", font=ctk.CTkFont("Inter", 14)).pack(pady=20)
+
 
             self.confirm_button.configure(
                 command=lambda: self.put_message(self.students)
@@ -852,7 +860,10 @@ class ClassReport(ctk.CTkFrame):
 
             self.is_initialized = True
         except Exception as e:
-            print(e)
+            import traceback
+            print("Erro ao inicializar ClassReport:", e)
+            traceback.print_exc()
+
 
     def select_phrase(self, phrase):
         self.selected_phrase = phrase
@@ -901,11 +912,17 @@ class ClassReport(ctk.CTkFrame):
         print(f"Novo texto : {new_text}")
 
         if phrase:
-            phrase.content = new_text 
-            print(f"Novo texto : {new_text}")
-            self.show_student_phrases(self.current_student)  
+            original_text = phrase.content  # salva antes de mudar
+            phrase.content = new_text       # modifica o conteúdo
 
-        self.edit_window.destroy()      
+            # Atualiza dinamicamente a checkbox correspondente
+            for widget in self.checkbutton_frame.winfo_children():
+                if isinstance(widget, ctk.CTkCheckBox) and widget.cget("text") == original_text:
+                    widget.configure(text=new_text)
+                    break
+
+        self.edit_window.destroy()
+      
 
 
     def highlight_selected_button(self, selected_button):
