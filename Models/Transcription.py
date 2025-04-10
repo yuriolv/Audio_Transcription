@@ -37,9 +37,8 @@ class Transcription:
                 "time": time,
                 "content": content
             }
-
         self.transcripted = messages
-        create_transcription(self.name, messages)
+        create_transcription(self.name, text)
 
 
     def getVocab(self, text, user):

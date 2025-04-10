@@ -21,10 +21,10 @@ def get_by_id(student_id):
         cursor.execute("SELECT Content FROM Transcriptions WHERE Students_Ids LIKE ? ORDER BY Id DESC LIMIT 3", (f'%{student_id}%',))
         return cursor.fetchall()
     
-def get_transcription(name):
+def get_transcription(title):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT Id FROM Transcriptions WHERE name = ?", (name))
+        cursor.execute("SELECT Id FROM Transcriptions WHERE title = ?", (title,))
         return cursor.fetchall()
 
 def update_transcription(transcription_id, class_id, content):

@@ -3,10 +3,10 @@ import sqlite3
 
 db_path = "language_school.db"
 
-def create_correction(correction, id_student, id_transcription):
+def create_correction(correction, phrase, id_student, id_transcription):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO Correction (Corrections, Student_Id, Transcription_Id) VALUES (?, ?, ?)", (correction, id_student, id_transcription))
+        cursor.execute("INSERT INTO Corrections (Error, Phrase, Student_Id, Transcription_Id) VALUES (?, ?, ?, ?)", (correction, phrase, id_student, id_transcription))
         conn.commit()
 
 def read_corrections():

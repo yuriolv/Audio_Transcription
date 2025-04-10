@@ -51,7 +51,6 @@ class App(ctk.CTk):
         self.show_frame(LoginScreen)
 
     def show_frame(self, tela):
-        print(f"Switching to: {tela}")
         frame = self.frames[tela]
         if hasattr(frame, "initialize"):
             frame.initialize()
@@ -108,14 +107,12 @@ class LoginScreen(ctk.CTkFrame):
         student_button.grid(column=2, row=0, padx=10)
 
     def load_student_screen(self):
-        print("Loading student screen...")
         self.controller.show_frame(StudentHome)
         student_frame = self.controller.frames[StudentHome]
 
         student_frame.show_chatbot()
 
     def load_teacher_screen(self):
-        print("Loading first screen...")
         self.controller.show_frame(TeacherHome)
 
     def select_option(self, option):
@@ -271,7 +268,7 @@ class StudentHome(ctk.CTkFrame):
                         I am the course administrator, and this information is being passed on to you as if you had observed it during the lessons!  He will talk to you soon.  
 
                         Use this information to provide constructive and direct feedback to help the student improve, only when they talk about it.    
-                        Keep your answers clear, objective and short. Remember that all examples will be given in English."""
+                        Keep your answers clear, objective and short. Remember that all examples and questions will be given in English, even if the student prefers to continue the conversation in Portuguese."""
 
         self.memory.chat_memory.add_user_message(prompt)
 
@@ -533,7 +530,6 @@ class TeacherHome(ctk.CTkFrame):
         self.controller.show_frame(LoadingScreen)
 
     def load_report_screen(self):
-        print("Loading report screen...")
         self.controller.show_frame(ReportScreen)
 
     def go_to_classReport(self):
@@ -701,7 +697,6 @@ class ReportScreen(ctk.CTkFrame):
             result = reports.read_reports()
 
             for row in result:
-                print(row[0], len(row[0]))
                 if len(row[0]) > CHAR_LIMIT:
                     display_name = row[0][:CHAR_LIMIT] + ' ...'
                 else:
@@ -753,24 +748,7 @@ class ReportScreen(ctk.CTkFrame):
         except Exception as e:
             print("Error initializing ReportScreen", e)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def go_to_teacherHome(self):
-        print("Back button pressed!!")
 
         self.is_initialized = False
         self.controller.show_frame(TeacherHome)

@@ -15,6 +15,7 @@ def errorDetection(transcripted):
     for user in transcripted.students:
         for phrase in user.phrases[:]:
             prompt2 = "Send me only the corrected sentence: " + phrase.content
+            only_phrase = phrase.content
             output = ''
             new_prompt = prompt1 + phrase.content
 
@@ -39,7 +40,7 @@ def errorDetection(transcripted):
                 phrase.content = report
                 id_aluno = get_id(user.name)[0][0]
                 id_transcricao = get_transcription(transcripted.name)[0][0]
-                create_correction(report, id_aluno, id_transcricao)
+                create_correction(report, only_phrase, id_aluno, id_transcricao)
                 
                 
     return transcripted.students
