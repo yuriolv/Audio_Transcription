@@ -286,7 +286,7 @@ class StudentHome(ctk.CTkFrame):
             # Exibe a mensagem do usuário
             user_label = ctk.CTkLabel(self.chat_frame, text=message,
                                     font=ctk.CTkFont('Inter', 14),
-                                    fg_color="#DCF8C6", text_color="black",
+                                    fg_color="#53abab", text_color="black",
                                     corner_radius=10, padx=10, pady=5, justify='left')
             user_label.pack(anchor="e", padx=10, pady=4)
 
