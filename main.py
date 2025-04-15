@@ -264,8 +264,7 @@ class StudentHome(ctk.CTkFrame):
 
                         Based on the class data, here is your analysis of the student's last week:  
                             - Percentage of class participation: {float(response[1]) * 100:.0f}% 
-                            - Percentage of English word usage: {float(response[4]) * 100:.0f}% 
-                            - Behavioral status: {response[5]}  
+                            - Percentage of English word usage: {float(response[4]) * 100:.0f}%  
                             - Repeated errors: {response[3]}  
 
                         I am the course administrator, and this information is being passed on to you as if you had observed it during the lessons!  He will talk to you soon.  
@@ -868,10 +867,30 @@ class ClassReport(ctk.CTkFrame):
     def select_phrase(self, phrase):
         self.selected_phrase = phrase
 
-    def edit_phrase(self, phrase):
-        if phrase is None:
-            print("Error: The phrase passed to edit_window is None.")  
+    def edit_phrase(self, _):
+        selected = []
+        for student in self.students:
+            for phrase in student.phrases:
+                if getattr(phrase, 'check', False):
+                    selected.append(phrase)
+
+        if len(selected) != 1:
+            if hasattr(self, "edit_warning_label"):
+                self.edit_warning_label.destroy()
+
+            self.edit_warning_label = ctk.CTkLabel(
+                self.content_frame,
+                text="Please select exactly ONE phrase to edit.",
+                text_color="red",
+                font=ctk.CTkFont("Inter", 14)
+            )
+            self.edit_warning_label.pack(pady=5)
             return
+        else:
+            if hasattr(self, "edit_warning_label"):
+                self.edit_warning_label.destroy()
+
+        phrase = selected[0]
 
         self.edit_window = ctk.CTkToplevel(self)
         self.edit_window.iconbitmap("Assets/Images/image15.ico")
