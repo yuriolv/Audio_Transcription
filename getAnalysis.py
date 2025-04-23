@@ -4,6 +4,9 @@ import nltk
 from textblob import TextBlob
 from langdetect import detect_langs
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from flair.models import TextClassifier
+from flair.data import Sentence
+
 import torch
 
 def getParticipation(id_aluno):
@@ -225,4 +228,13 @@ def getEmotions(id_aluno):
                 
     return max(set(emotions), key=emotions.count)
 
-getEmotions(2)
+def getEmotion(phrase):
+    classifier = TextClassifier.load('sentiment')
+    sentence = Sentence(phrase)
+
+    classifier.predict(sentence)
+
+    label = sentence.labels[0]
+    print(f"Sentimento: {label.value} (confiança: {label.score:.2f})")
+
+getEmotion("Unfortunately I didn't find this class very productive")

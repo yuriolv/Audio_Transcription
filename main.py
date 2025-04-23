@@ -146,6 +146,7 @@ class StudentHome(ctk.CTkFrame):
 
         self.memory = ConversationBufferMemory()
         self.memory.chat_memory.add_user_message('')
+        self.initial_message_stored = False
         self.get_user_info()
 
         self.grid_rowconfigure(0, weight=1)
@@ -244,7 +245,9 @@ class StudentHome(ctk.CTkFrame):
         self.memory.chat_memory.add_ai_message(first_message)
 
     def get_chatbot_response(self, message):
-        self.memory.chat_memory.add_user_message(message)
+        if not self.initial_message_stored:
+            self.memory.chat_memory.add_user_message(message)
+            self.initial_message_stored = True
 
         history = self.memory.load_memory_variables({})['history']
 
@@ -259,10 +262,12 @@ class StudentHome(ctk.CTkFrame):
         response = reports.get_report(1)[0]
 
         prompt = f"""You are a personal assistant to students on an English course.  
-                        Before we start, ask them what language they would like to communicate in (e.g. English, Spanish, Portuguese) 
-                        Regardless of the choice, all examples will be provided in English.  
+                        Before we start, the students are asked which language they would like to communicate in (e.g. English or Portuguese) 
+                        Regardless of the choice, all the examples will be given in English. 
+                        If the student tries to speak in a language other than Portuguese or English, 
+                        tell them that you must remain in English as this is the aim of the course.  
 
-                        Based on the class data, here is your analysis of the student's last week:  
+                        Based on the class data, here is your analysis of the student's last week (the administrator is passing it on to you, not the student):  
                             - Percentage of class participation: {float(response[1]) * 100:.0f}% 
                             - Percentage of English word usage: {float(response[4]) * 100:.0f}%  
                             - Repeated errors: {response[3]}  
