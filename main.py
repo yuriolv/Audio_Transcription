@@ -148,6 +148,7 @@ class StudentHome(ctk.CTkFrame):
         self.memory.chat_memory.add_user_message('')
         self.initial_message_stored = False
         self.get_user_info()
+        self.stop_response = False
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=0)
@@ -244,16 +245,25 @@ class StudentHome(ctk.CTkFrame):
         self.display_text_slowly(bot_label, textwrap.fill(first_message, 60))
         self.memory.chat_memory.add_ai_message(first_message)
 
-    def get_chatbot_response(self, message):
-        if not self.initial_message_stored:
-            self.memory.chat_memory.add_user_message(message)
-            self.initial_message_stored = True
+    def get_chatbot_response(self, message, update_callback=None):
+        self.memory.chat_memory.add_user_message(message)
 
         history = self.memory.load_memory_variables({})['history']
+        
+        prompt = history + "\nUser: " + message + "\nAI:"
 
-        response = self.llm.invoke(history + "\nUser: " + message + "\nAI:")
-
-        self.memory.chat_memory.add_ai_message(response.strip())
+        response = ""
+        for chunk in self.llm.stream(prompt):
+            if self.stop_response:
+                break
+            
+            response += chunk
+            
+            if update_callback:
+                self.after(0, lambda c=chunk: update_callback(c))
+                
+        if not self.stop_response:
+            self.memory.chat_memory.add_ai_message(response.strip())
 
         return response.strip()
 
@@ -291,7 +301,7 @@ class StudentHome(ctk.CTkFrame):
             # Exibe a mensagem do usuário
             user_label = ctk.CTkLabel(self.chat_frame, text=message,
                                     font=ctk.CTkFont('Inter', 14),
-                                    fg_color="#DCF8C6", text_color="black",
+                                    fg_color="#4092a0", text_color="black",
                                     corner_radius=10, padx=10, pady=5, justify='left')
             user_label.pack(anchor="e", padx=10, pady=4)
 
@@ -300,49 +310,38 @@ class StudentHome(ctk.CTkFrame):
             self.chat_frame._parent_canvas.yview_moveto(1.0)
 
             # Label do bot com tamanho reduzido e animação de "Digitando..."
-            bot_label = ctk.CTkLabel(self.chat_frame, text="Digitando", 
+            bot_label = ctk.CTkLabel(self.chat_frame, text="", 
                                     font=ctk.CTkFont('Inter', 14),
                                     fg_color="#f6f6f6", text_color="black",
                                     corner_radius=10, padx=10, pady=5, justify='left', 
-                                    width=200, wraplength=180)
+                                    width=200)
             bot_label.pack(anchor="w", padx=10, pady=4)
 
             self.chat_frame.update_idletasks()
             self.chat_frame._parent_canvas.yview_moveto(1.0)
 
-            # Inicia a animação
-            self.typing_animation_running = True
-            self.animate_typing(bot_label)
 
             # Roda a resposta do bot em background
-            threading.Thread(target=self.handle_bot_response, args=(message, bot_label)).start()
-
-    def animate_typing(self, label, count=0):
-        if not hasattr(self, 'typing_animation_running') or not self.typing_animation_running:
-            return
-
-        dots = "." * (count % 4)
-        label.configure(text="Digitando" + dots)
-        self.after(500, self.animate_typing, label, count + 1)
+            threading.Thread(target=lambda: (time.sleep(0.2), self.handle_bot_response(message, bot_label))).start()
 
     def handle_bot_response(self, message, bot_label):
-        # Gera a resposta
-        response = self.get_chatbot_response(message)
-        formatted_response = self.format_response(response)
+        self.stop_response = False
+        
+        def update_display(chunk):
+            if self.stop_response:
+                return
+            
+            current_text = bot_label.cget("text")
+            bot_label.configure(text=current_text + chunk, 
+                                width=400, wraplength=390)
+            
+        self.get_chatbot_response(message, update_callback=update_display)
 
-        # Para a animação
-        self.typing_animation_running = False
-
-        # Atualiza visualmente no thread principal
-        self.after(0, lambda: self.show_final_response(bot_label, formatted_response))
-
-    def show_final_response(self, label, text):
-        label.configure(width=400, wraplength=390, text="")  
-        self.display_text_slowly(label, text)
-
-
+    def stop_bot_response(self):
+        self.stop_response = True
+        self.llm.stop
     
-    def format_response(self, text):
+    '''def format_response(self, text):
         # Captura blocos com 2 a 3 frases seguidas
         sentence_pattern = r'([^.!?]*[.!?])'
         sentences = re.findall(sentence_pattern, text.strip())
@@ -371,15 +370,17 @@ class StudentHome(ctk.CTkFrame):
 
             formatted.append(paragraph.strip())
 
-        return '\n\n'.join(formatted)
-
-
-
+        return '\n\n'.join(formatted)'''
+        
 
     def display_text_slowly(self, label, text, index=0):
+        if self.stop_response:
+            label.configure(text="")
+            return
+        
         if index < len(text):
             label.configure(text=text[:index + 1])
-            self.after(30, self.display_text_slowly, label, text, index + 1)
+            self.after(15, self.display_text_slowly, label, text, index + 1)
             self.chat_frame._parent_canvas.yview_moveto(1.0)  
 
     def create_chatbot_page(self):
@@ -402,7 +403,10 @@ class StudentHome(ctk.CTkFrame):
         self.chat_entry.bind("<Return>", self.send_message_on_enter)
 
         self.send_button = ctk.CTkButton(entry_frame, text="Send", command=self.send_message, fg_color='#3C808C', hover_color='#4092a0')
-        self.send_button.pack(side="right")
+        self.send_button.pack(side="right", pady=5, padx=5)
+        
+        self.stop_button = ctk.CTkButton(entry_frame, text="Stop", command=self.stop_bot_response, fg_color='#3C808C', hover_color='#4092a0')
+        self.stop_button.pack(side="right", pady=5, padx=5)
 
         return frame
 
