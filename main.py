@@ -246,7 +246,9 @@ class StudentHome(ctk.CTkFrame):
         self.memory.chat_memory.add_ai_message(first_message)
 
     def get_chatbot_response(self, message, update_callback=None):
-        self.memory.chat_memory.add_user_message(message)
+        if not self.initial_message_stored:
+            self.memory.chat_memory.add_user_message(message)
+            self.initial_message_stored = True
 
         history = self.memory.load_memory_variables({})['history']
         
@@ -296,6 +298,7 @@ class StudentHome(ctk.CTkFrame):
         self.send_message()
 
     def send_message(self):
+        self.stop_response = False
         message = self.chat_entry.get().strip()
         message = textwrap.fill(message, 60)
 
@@ -312,38 +315,49 @@ class StudentHome(ctk.CTkFrame):
             self.chat_frame._parent_canvas.yview_moveto(1.0)
 
             # Label do bot com tamanho reduzido e animação de "Digitando..."
-            bot_label = ctk.CTkLabel(self.chat_frame, text="", 
+            bot_label = ctk.CTkLabel(self.chat_frame, text="Digitando", 
                                     font=ctk.CTkFont('Inter', 14),
                                     fg_color="#f6f6f6", text_color="black",
                                     corner_radius=10, padx=10, pady=5, justify='left', 
-                                    width=200)
+                                    width=200, wraplength=180)
             bot_label.pack(anchor="w", padx=10, pady=4)
 
             self.chat_frame.update_idletasks()
             self.chat_frame._parent_canvas.yview_moveto(1.0)
 
 
-            # Roda a resposta do bot em background
+            self.typing_animation_running = True
+            self.animate_typing(bot_label)
             threading.Thread(target=lambda: (time.sleep(0.2), self.handle_bot_response(message, bot_label))).start()
 
+    def animate_typing(self, label, count=0):
+        if not hasattr(self, 'typing_animation_running') or not self.typing_animation_running:
+            return
+
+        dots = "." * (count % 4)
+        label.configure(text="Digitando" + dots)
+        self.after(500, self.animate_typing, label, count + 1)
+
     def handle_bot_response(self, message, bot_label):
-        self.stop_response = False
-        
-        def update_display(chunk):
-            if self.stop_response:
-                return
-            
-            current_text = bot_label.cget("text")
-            bot_label.configure(text=current_text + chunk, 
-                                width=400, wraplength=390)
-            
-        self.get_chatbot_response(message, update_callback=update_display)
+        # Gera a resposta
+        response = self.get_chatbot_response(message)
+        formatted_response = self.format_response(response)
+
+        # Para a animação
+        self.typing_animation_running = False
+
+        # Atualiza visualmente no thread principal
+        self.after(0, lambda: self.show_final_response(bot_label, formatted_response))
+
+    def show_final_response(self, label, text):
+        label.configure(width=400, wraplength=390, text="")  
+        self.display_text_slowly(label, text)
 
     def stop_bot_response(self):
         self.stop_response = True
         self.llm.stop
     
-    '''def format_response(self, text):
+    def format_response(self, text):
         # Captura blocos com 2 a 3 frases seguidas
         sentence_pattern = r'([^.!?]*[.!?])'
         sentences = re.findall(sentence_pattern, text.strip())
@@ -372,17 +386,16 @@ class StudentHome(ctk.CTkFrame):
 
             formatted.append(paragraph.strip())
 
-        return '\n\n'.join(formatted)'''
+        return '\n\n'.join(formatted)
         
 
     def display_text_slowly(self, label, text, index=0):
         if self.stop_response:
-            label.configure(text="")
             return
         
         if index < len(text):
             label.configure(text=text[:index + 1])
-            self.after(15, self.display_text_slowly, label, text, index + 1)
+            self.after(30, self.display_text_slowly, label, text, index + 1)
             self.chat_frame._parent_canvas.yview_moveto(1.0)  
 
     def create_chatbot_page(self):

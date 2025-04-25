@@ -10,7 +10,7 @@ def errorDetection(transcripted):
 
     prompt1 = """Im sending you one phrase, classify it with only one word, being the word one of the two options: Correct, Wrong(The Corresponding Grammatical or Syntatical Error Type). Here is the phrase: """
 
-    model = OllamaLLM(model="llama3.2") #ollama run llama3.2-vision 11B
+    model = OllamaLLM(model="gemma3:27b") #ollama run llama3.2-vision 11B
 
     for user in transcripted.students:
         for phrase in user.phrases[:]:
