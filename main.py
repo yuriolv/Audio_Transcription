@@ -271,11 +271,13 @@ class StudentHome(ctk.CTkFrame):
         reports = ReportsCRUD('language_school.db')
         response = reports.get_report(1)[0]
 
-        prompt = f"""You are a personal assistant to students on an English course.  
+        prompt = f"""You are a personal assistant for students on an English course.  
                         Before we start, the students are asked which language they would like to communicate in (e.g. English or Portuguese) 
-                        Regardless of the choice, all the examples will be given in English. 
+                        Regardless of the choice, all the EXAMPLES and EXERCISES must be given in English. 
                         If the student tries to speak in a language other than Portuguese or English, 
-                        tell them that you must remain in English as this is the aim of the course.  
+                        tell them that you must remain in English as this is the aim of the course. 
+                        Always follow the student's preferred language (English or Portuguese).
+                        Speak in Portuguese if the student asks.
 
                         Based on the class data, here is your analysis of the student's last week (the administrator is passing it on to you, not the student):  
                             - Percentage of class participation: {float(response[1]) * 100:.0f}% 
@@ -284,8 +286,8 @@ class StudentHome(ctk.CTkFrame):
 
                         I am the course administrator, and this information is being passed on to you as if you had observed it during the lessons!  He will talk to you soon.  
 
-                        Use this information to provide constructive and direct feedback to help the student improve, only when they talk about it.    
-                        Keep your answers clear, objective and short. Remember that all examples and questions will be given in English, even if the student prefers to continue the conversation in Portuguese."""
+                        Do NOT give feedback unless the student asks about their performance. If they do, give a SHORT, CLEAR and HELPFUL response. 
+                        All EXEMPLES and EXERCISES must be in ENGLISH only."""
 
         self.memory.chat_memory.add_user_message(prompt)
 
