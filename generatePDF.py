@@ -138,14 +138,12 @@ def create_pdf(file_name, student_id):
         if title == "Repeated mistakes":
             errors = data
             y_offset = rect_y + rect_height - 40
-            for phrase, error, in errors[:2]:
-                for line in error.split('\n'):
-                    c.setFont("Helvetica", 12)
-                    c.drawString(60, y_offset, line.strip())
-                    y_offset -= 20
-                    
-            if len(errors) > 2:
-                c.drawString(60, y_offset - 10, "More errors will be available next time.")
+            for phrase, error in errors:
+                c.setFont("Helvetica", 12)
+                c.drawString(60, y_offset, f"{phrase} → {error}")
+                y_offset -= 20
+            if len(errors) > 5:
+                c.drawString(60, y_offset, "More errors in the full report.")
         
         elif title == "Participation":
             participation = data

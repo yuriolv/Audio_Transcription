@@ -18,7 +18,8 @@ def read_corrections():
 def get_corrections(student_id):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT Phrase,Error FROM Corrections WHERE Student_Id = ?", (student_id,))
+        cursor.execute("SELECT Phrase,Error FROM Corrections WHERE Student_id = ? " \
+        "order by Transcription_Id DESC, Id DESC LIMIT 4;", (student_id,))
         return cursor.fetchall()[-3:]
 
 def update_correction(correction_id, correction, id_student, id_transcription):
