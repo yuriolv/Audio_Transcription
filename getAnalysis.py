@@ -172,7 +172,7 @@ def getName(id_aluno):
     student = Student.get_name(id_aluno)[0][0]
     return student
 
-model_name = "SamLowe/roberta-base-go_emotions"
+'''model_name = "SamLowe/roberta-base-go_emotions"
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSequenceClassification.from_pretrained(model_name)
@@ -237,4 +237,4 @@ def getEmotion(phrase):
     label = sentence.labels[0]
     print(f"Sentimento: {label.value} (confiança: {label.score:.2f})")
 
-getEmotion("Unfortunately I didn't find this class very productive")
+getEmotion("Unfortunately I didn't find this class very productive")'''

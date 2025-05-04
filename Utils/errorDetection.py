@@ -1,7 +1,7 @@
 from langchain_ollama import OllamaLLM
 from Database.Corrections import create_correction
 from Database.Transcription import get_transcription
-from Database.Student import get_id
+from Database.Student import get_id, create_student
 import textwrap
 
 
