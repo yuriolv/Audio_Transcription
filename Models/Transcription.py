@@ -3,6 +3,7 @@ from Database.Transcription import create_transcription
 from Models.Phrases import Phrases
 from pathlib import Path
 import nltk
+import re
 
 class Transcription:
     def __init__(self, file, name):
@@ -39,6 +40,45 @@ class Transcription:
             }
         self.transcripted = messages
         create_transcription(self.name, text)
+        
+    def getTranscriptionFromMeet(self):
+        
+        nltk.download('punkt_tab')
+        
+        with open(self.file, encoding='utf-8') as f :
+            text = f.read()
+            
+        messages = {}
+        current_time = None
+        
+        timestamp_pattern = re.compile(r"^\d{2}:\d{2}:\d{2}$")
+        speaker_pattern = re.compile(r"^(.+?):\s*(.+)")
+        
+        lines = text.strip().split("\n")
+        
+        i = 1
+        for line in lines:
+            if not line:
+                continue # Pula linhas vazias 
+            
+            if timestamp_pattern.match(line):
+                current_time = line.strip()
+            
+            elif speaker_pattern.match(line):
+                speaker, message = speaker_pattern.match(line).groups()
+                
+                content = nltk.sent_tokenize(message)
+                
+                messages[f"messages{i}"] = {
+                    "sender": speaker,
+                    "time": current_time,
+                    "content": content
+                }
+                
+                i += 1
+                    
+        self.transcripted = messages
+        create_transcription(self.name, text)
 
 
     def getVocab(self, text, user):
@@ -51,6 +91,20 @@ class Transcription:
 
         return [new_words]
 
+    '''def getStudents(self):
+        messages = {}
+        
+        for message in self.transcripted:
+            speaker = message["speaker"]
+            content = message = ["message"]
+            phrase = Phrases(content)
+            message.setdefault(speaker, []).append(phrase)
+            
+        for name, phrase in messages.items():
+            user = User(name, phrase)
+            user.getEmail()
+            self.students.append(user)'''
+    
     def getStudents(self):
         messages = {}
         for message in self.transcripted.values():

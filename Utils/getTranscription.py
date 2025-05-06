@@ -24,7 +24,7 @@ def get_Transcription(file_name):
 
           transcripted = Transcription(path, name)
 
-          transcripted.getTranscription()
+          transcripted.getTranscriptionFromMeet()
           transcripted.getStudents()
 
           return transcripted

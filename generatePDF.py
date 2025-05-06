@@ -139,8 +139,10 @@ def create_pdf(file_name, student_id):
             errors = data
             y_offset = rect_y + rect_height - 40
             for phrase, error in errors:
+                print(errors)
+                formatted = f'"{phrase}" → {error.split('\n', 1)[1].strip()}'
                 c.setFont("Helvetica", 12)
-                c.drawString(60, y_offset, f"{phrase} → {error}")
+                c.drawString(60, y_offset+10, formatted)
                 y_offset -= 20
             if len(errors) > 5:
                 c.drawString(60, y_offset, "More errors in the full report.")

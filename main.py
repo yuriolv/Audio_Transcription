@@ -720,7 +720,18 @@ class ReportScreen(ctk.CTkFrame):
             width=150
             )
 
-        back_button.pack()
+        back_button.pack(anchor='center', side='left', padx=5)
+        
+        pdf_button = ctk.CTkButton(
+            button_frame, text="Open PDF", 
+            command=lambda: self.go_to_teacherHome(), 
+            fg_color="#3C808C", text_color='#FFFFFF', 
+            hover_color="#4092a0", 
+            font=ctk.CTkFont(family='Inter'),
+            width=150
+            )
+
+        pdf_button.pack(anchor='center', side='left', padx=5)
 
         def carregar_dados():
             result = reports.read_reports()
@@ -742,9 +753,6 @@ class ReportScreen(ctk.CTkFrame):
                 self.tooltip_name[item_id] = row[0] 
 
         carregar_dados()
-
-        back_button = ctk.CTkButton(self, text="Back", fg_color='#3C808C', hover_color='#4092a0', command=lambda: self.go_to_teacherHome())
-        back_button.pack(anchor='center', pady=15)
 
         tooltip_label = tk.Label(self, text="", background="white", foreground='black', relief="solid", borderwidth=1, wraplength=250)
         tooltip_label.place_forget()

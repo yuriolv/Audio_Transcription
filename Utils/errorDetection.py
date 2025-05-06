@@ -39,7 +39,17 @@ def errorDetection(transcripted):
                 report = '\n'.join(wrapped_lines)
                 
                 phrase.content = report
-                id_aluno = get_id(user.name)[0][0]
+                temp = get_id(user.name) #[0][0]
+                if not temp:
+                    print(f"student {user.name} not found. creating new one...")
+                    create_student(user.name, "placeholder@gmail.com") 
+                    
+                    temp = get_id(user.name)
+                    
+                    if not temp:
+                        raise ValueError(f"failed to create student {user.name}!")
+                    
+                id_aluno = temp[0][0]    
                 id_transcricao = get_transcription(transcripted.name)[0][0]
                 create_correction(report, only_phrase, id_aluno, id_transcricao)
                 
